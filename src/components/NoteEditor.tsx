@@ -70,8 +70,8 @@ export const NoteEditor: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col w-full">
-      <div className="flex items-center border-b p-4">
+    <div className="flex-1 flex flex-col w-full h-full">
+      <div className="flex items-center border-b p-4 shrink-0">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -110,9 +110,9 @@ export const NoteEditor: React.FC = () => {
         defaultValue="edit"
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col h-full"
       >
-        <div className="px-4 border-b">
+        <div className="px-4 border-b shrink-0">
           <TabsList className="h-10 mx-0">
             <TabsTrigger value="edit" className="flex items-center gap-1.5">
               <Edit className="h-4 w-4" />
@@ -125,21 +125,23 @@ export const NoteEditor: React.FC = () => {
           </TabsList>
         </div>
 
-        <TabsContent value="edit" className="flex-1 m-0 p-0">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note..."
-            className={cn(
-              "flex-1 h-full resize-none rounded-none border-none focus-visible:ring-0 p-4",
-              "font-mono text-sm"
-            )}
-          />
+        <TabsContent value="edit" className="flex-1 m-0 p-0 h-full overflow-hidden">
+          <div className="h-full w-full">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Start writing your note..."
+              className={cn(
+                "flex-1 h-full w-full resize-none rounded-none border-none focus-visible:ring-0 p-4",
+                "font-mono text-sm"
+              )}
+            />
+          </div>
         </TabsContent>
 
-        <TabsContent value="preview" className="flex-1 m-0 p-0 overflow-auto">
+        <TabsContent value="preview" className="flex-1 m-0 p-0 h-full overflow-hidden">
           <ScrollArea className="h-full w-full">
-            <div className="p-6 prose max-w-full">
+            <div className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>

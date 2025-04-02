@@ -28,15 +28,15 @@ const Index = () => {
             </SidebarContent>
           </Sidebar>
           
-          <div className="flex-1 flex flex-col h-full relative">
-            <div className="p-2 border-b flex items-center">
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="p-2 border-b flex items-center shrink-0">
               <SidebarTrigger />
               <h1 className="text-lg font-serif font-medium ml-2">Reflect</h1>
             </div>
             
-            <ScrollArea className="flex-1">
+            <div className="flex-1 h-full overflow-hidden">
               <NoteEditor />
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </SidebarProvider>
