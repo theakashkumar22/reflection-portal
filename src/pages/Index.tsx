@@ -3,8 +3,16 @@ import React from "react";
 import { NotesProvider } from "@/context/NotesContext";
 import { NotesSidebar } from "@/components/NotesSidebar";
 import { EnhancedNoteEditor } from "@/components/EnhancedNoteEditor";
-import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarInset } from "@/components/ui/sidebar";
+import { 
+  SidebarProvider, 
+  SidebarTrigger, 
+  Sidebar, 
+  SidebarContent, 
+  SidebarInset,
+  SidebarRail
+} from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Toaster } from "@/components/ui/sonner";
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -17,15 +25,17 @@ const Index = () => {
             <SidebarContent>
               <NotesSidebar />
             </SidebarContent>
+            <SidebarRail />
           </Sidebar>
           <SidebarInset className="flex flex-col">
-            <div className="h-10 flex items-center px-4 border-b lg:hidden">
+            <div className="h-10 flex items-center px-4 border-b">
               <SidebarTrigger />
               <h1 className="text-xl font-serif font-bold ml-2">Reflect</h1>
             </div>
             <EnhancedNoteEditor />
           </SidebarInset>
         </div>
+        <Toaster />
       </SidebarProvider>
     </NotesProvider>
   );
