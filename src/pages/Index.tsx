@@ -19,26 +19,28 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
   return (
-    <SidebarProvider defaultOpen={!isMobile} open={sidebarOpen} onOpenChange={setSidebarOpen}>
-      <div className="h-screen w-full flex overflow-hidden animate-fade-in">
-        <Sidebar collapsible="offcanvas">
-          <SidebarContent>
-            <NotesSidebar onNoteSelect={() => isMobile && setSidebarOpen(false)} />
-          </SidebarContent>
-        </Sidebar>
-        
-        <div className="flex-1 flex flex-col h-full relative">
-          <div className="p-2 border-b flex items-center">
-            <SidebarTrigger />
-            <h1 className="text-lg font-serif font-medium ml-2">Reflect</h1>
-          </div>
+    <NotesProvider>
+      <SidebarProvider defaultOpen={!isMobile} open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <div className="h-screen w-full flex overflow-hidden animate-fade-in">
+          <Sidebar collapsible="offcanvas">
+            <SidebarContent>
+              <NotesSidebar onNoteSelect={() => isMobile && setSidebarOpen(false)} />
+            </SidebarContent>
+          </Sidebar>
           
-          <ScrollArea className="flex-1">
-            <NoteEditor />
-          </ScrollArea>
+          <div className="flex-1 flex flex-col h-full relative">
+            <div className="p-2 border-b flex items-center">
+              <SidebarTrigger />
+              <h1 className="text-lg font-serif font-medium ml-2">Reflect</h1>
+            </div>
+            
+            <ScrollArea className="flex-1">
+              <NoteEditor />
+            </ScrollArea>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </NotesProvider>
   );
 };
 
