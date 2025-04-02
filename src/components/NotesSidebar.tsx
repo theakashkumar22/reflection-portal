@@ -19,7 +19,11 @@ import {
 import { Folder as FolderType, Note } from "@/types";
 import { cn } from "@/lib/utils";
 
-export const NotesSidebar: React.FC = () => {
+interface NotesSidebarProps {
+  onNoteSelect?: () => void;
+}
+
+export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
   const { 
     notes, 
     folders, 
@@ -53,6 +57,13 @@ export const NotesSidebar: React.FC = () => {
     }
   };
 
+  const handleNoteClick = (noteId: string) => {
+    setActiveNoteId(noteId);
+    if (onNoteSelect) {
+      onNoteSelect();
+    }
+  };
+
   // Group notes by folders
   const notesWithoutFolder = notes.filter(note => note.folderId === null);
   const notesByFolder: Record<string, Note[]> = {};
@@ -62,7 +73,7 @@ export const NotesSidebar: React.FC = () => {
   });
 
   return (
-    <div className="h-screen w-64 border-r bg-sidebar flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="p-4">
         <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
         <div className="flex items-center mt-4 gap-1">
@@ -132,7 +143,7 @@ export const NotesSidebar: React.FC = () => {
                 key={note.id}
                 note={note}
                 isActive={note.id === activeNoteId}
-                onClick={() => setActiveNoteId(note.id)}
+                onClick={() => handleNoteClick(note.id)}
               />
             ))}
           </div>
@@ -150,7 +161,7 @@ export const NotesSidebar: React.FC = () => {
                 isExpanded={expandedFolders[folder.id]}
                 onToggle={() => handleFolderToggle(folder.id)}
                 activeNoteId={activeNoteId}
-                onNoteClick={setActiveNoteId}
+                onNoteClick={handleNoteClick}
                 onCreateNote={() => createNote(folder.id)}
               />
             ))}

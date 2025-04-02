@@ -58,7 +58,7 @@ export const NoteEditor: React.FC = () => {
 
   if (!activeNote) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">
           <h2 className="text-2xl font-serif mb-2">No Note Selected</h2>
           <p className="text-muted-foreground">
@@ -70,7 +70,7 @@ export const NoteEditor: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
+    <div className="flex-1 flex flex-col w-full">
       <div className="flex items-center border-b p-4">
         <Input
           value={title}
@@ -138,8 +138,8 @@ export const NoteEditor: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="preview" className="flex-1 m-0 p-0 overflow-auto">
-          <ScrollArea className="h-full">
-            <div className="p-6 note-editor">
+          <ScrollArea className="h-full w-full">
+            <div className="p-6 prose max-w-full">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>
