@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,10 @@ import {
   FolderOpen, 
   PlusCircle, 
   Search, 
-  X, 
-  SidebarClose
+  X 
 } from "lucide-react";
 import { Folder as FolderType, Note } from "@/types";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useSidebar } from "@/components/ui/sidebar";
-import { toast } from "sonner";
 
 export const NotesSidebar: React.FC = () => {
   const { 
@@ -40,8 +37,6 @@ export const NotesSidebar: React.FC = () => {
   
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const { setOpen } = useSidebar();
 
   const handleFolderToggle = (folderId: string) => {
     setExpandedFolders(prev => ({
@@ -55,26 +50,10 @@ export const NotesSidebar: React.FC = () => {
       createFolder(newFolderName.trim());
       setNewFolderName("");
       setIsCreateFolderOpen(false);
-      toast.success("Folder created");
     }
   };
 
-  const handleNoteClick = (noteId: string) => {
-    setActiveNoteId(noteId);
-    if (isMobile) {
-      setOpen(false);
-    }
-  };
-
-  const handleCreateNote = (folderId: string | null) => {
-    const newNoteId = createNote(folderId);
-    toast.success("New note created");
-    if (isMobile) {
-      setOpen(false);
-    }
-    return newNoteId;
-  };
-
+  // Group notes by folders
   const notesWithoutFolder = notes.filter(note => note.folderId === null);
   const notesByFolder: Record<string, Note[]> = {};
   
@@ -83,27 +62,15 @@ export const NotesSidebar: React.FC = () => {
   });
 
   return (
-    <div className="h-full flex flex-col bg-sidebar">
+    <div className="h-screen w-64 border-r bg-sidebar flex flex-col">
       <div className="p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="lg:hidden"
-              onClick={() => setOpen(false)}
-            >
-              <SidebarClose className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
+        <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
         <div className="flex items-center mt-4 gap-1">
           <Button 
             variant="ghost" 
             size="icon" 
             className="h-8 w-8"
-            onClick={() => handleCreateNote(null)}
+            onClick={() => createNote(null)}
           >
             <PlusCircle className="h-5 w-5 text-sidebar-foreground" />
           </Button>
@@ -156,6 +123,7 @@ export const NotesSidebar: React.FC = () => {
       <Separator />
       
       <ScrollArea className="flex-1 py-2">
+        {/* Render notes without folders */}
         {notesWithoutFolder.length > 0 && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-muted-foreground px-4 py-2">NOTES</h3>
@@ -164,12 +132,13 @@ export const NotesSidebar: React.FC = () => {
                 key={note.id}
                 note={note}
                 isActive={note.id === activeNoteId}
-                onClick={() => handleNoteClick(note.id)}
+                onClick={() => setActiveNoteId(note.id)}
               />
             ))}
           </div>
         )}
         
+        {/* Render folders and their notes */}
         {folders.length > 0 && (
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground px-4 py-2">FOLDERS</h3>
@@ -181,8 +150,8 @@ export const NotesSidebar: React.FC = () => {
                 isExpanded={expandedFolders[folder.id]}
                 onToggle={() => handleFolderToggle(folder.id)}
                 activeNoteId={activeNoteId}
-                onNoteClick={handleNoteClick}
-                onCreateNote={() => handleCreateNote(folder.id)}
+                onNoteClick={setActiveNoteId}
+                onCreateNote={() => createNote(folder.id)}
               />
             ))}
           </div>
