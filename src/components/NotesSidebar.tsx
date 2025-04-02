@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,22 @@ import {
   FolderOpen, 
   PlusCircle, 
   Search, 
-  X 
+  X,
+  Trash2
 } from "lucide-react";
 import { Folder as FolderType, Note } from "@/types";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface NotesSidebarProps {
   onNoteSelect?: () => void;
@@ -31,6 +42,7 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
     setActiveNoteId, 
     createNote, 
     createFolder,
+    deleteFolder,
     searchQuery,
     setSearchQuery 
   } = useNotes();
@@ -64,13 +76,39 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
     }
   };
 
+  // Filter notes and folders based on search query
+  const filteredNotes = searchQuery 
+    ? notes.filter(note => 
+        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        note.content.toLowerCase().includes(searchQuery.toLowerCase())
+    : notes;
+
+  const filteredFolders = searchQuery
+    ? folders.filter(folder => 
+        folder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        notes.some(note => 
+          note.folderId === folder.id && 
+          (note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           note.content.toLowerCase().includes(searchQuery.toLowerCase()))
+        ))
+    : folders;
+
   // Group notes by folders
-  const notesWithoutFolder = notes.filter(note => note.folderId === null);
+  const notesWithoutFolder = filteredNotes.filter(note => note.folderId === null);
   const notesByFolder: Record<string, Note[]> = {};
   
-  folders.forEach(folder => {
-    notesByFolder[folder.id] = notes.filter(note => note.folderId === folder.id);
+  filteredFolders.forEach(folder => {
+    notesByFolder[folder.id] = filteredNotes.filter(note => note.folderId === folder.id);
   });
+
+  // Auto-expand folders that contain search results
+  if (searchQuery) {
+    filteredFolders.forEach(folder => {
+      if (notesByFolder[folder.id]?.length > 0 && !expandedFolders[folder.id]) {
+        setExpandedFolders(prev => ({ ...prev, [folder.id]: true }));
+      }
+    });
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -150,10 +188,10 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
         )}
         
         {/* Render folders and their notes */}
-        {folders.length > 0 && (
+        {filteredFolders.length > 0 && (
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground px-4 py-2">FOLDERS</h3>
-            {folders.map(folder => (
+            {filteredFolders.map(folder => (
               <FolderItem
                 key={folder.id}
                 folder={folder}
@@ -163,8 +201,16 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
                 activeNoteId={activeNoteId}
                 onNoteClick={handleNoteClick}
                 onCreateNote={() => createNote(folder.id)}
+                onDeleteFolder={() => deleteFolder(folder.id)}
               />
             ))}
+          </div>
+        )}
+
+        {/* Show message when no results found */}
+        {searchQuery && filteredNotes.length === 0 && filteredFolders.length === 0 && (
+          <div className="p-4 text-center text-muted-foreground">
+            No notes or folders found matching "{searchQuery}"
           </div>
         )}
       </ScrollArea>
@@ -201,6 +247,7 @@ interface FolderItemProps {
   activeNoteId: string | null;
   onNoteClick: (id: string) => void;
   onCreateNote: () => void;
+  onDeleteFolder: () => void;
 }
 
 const FolderItem: React.FC<FolderItemProps> = ({
@@ -210,7 +257,8 @@ const FolderItem: React.FC<FolderItemProps> = ({
   onToggle,
   activeNoteId,
   onNoteClick,
-  onCreateNote
+  onCreateNote,
+  onDeleteFolder
 }) => {
   return (
     <div>
@@ -231,17 +279,54 @@ const FolderItem: React.FC<FolderItemProps> = ({
           <Folder className="h-4 w-4 mr-2 text-muted-foreground" />
         )}
         <span className="font-medium">{folder.name}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 ml-auto opacity-0 group-hover:opacity-100"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCreateNote();
-          }}
-        >
-          <PlusCircle className="h-3 w-3" />
-        </Button>
+        
+        <div className="ml-auto flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateNote();
+            }}
+          >
+            <PlusCircle className="h-3 w-3" />
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Folder</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this folder and all its contents?
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteFolder();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
       
       {isExpanded && notes.length > 0 && (
