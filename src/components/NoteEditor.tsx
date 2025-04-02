@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,7 +70,7 @@ export const NoteEditor: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
+    <div className="flex-1 flex flex-col w-full h-full">
       <div className="flex items-center border-b p-4 shrink-0">
         <Input
           value={title}
@@ -109,7 +110,7 @@ export const NoteEditor: React.FC = () => {
         defaultValue="edit"
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex-1 flex flex-col h-full overflow-hidden"
+        className="flex-1 flex flex-col h-full"
       >
         <div className="px-4 border-b shrink-0">
           <TabsList className="h-10 mx-0">
@@ -125,18 +126,20 @@ export const NoteEditor: React.FC = () => {
         </div>
 
         <TabsContent value="edit" className="flex-1 m-0 p-0 h-full overflow-hidden">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note..."
-            className={cn(
-              "h-full w-full resize-none rounded-none border-none focus-visible:ring-0 p-4",
-              "font-mono text-sm"
-            )}
-          />
+          <div className="h-full w-full">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Start writing your note..."
+              className={cn(
+                "flex-1 h-full w-full resize-none rounded-none border-none focus-visible:ring-0 p-4",
+                "font-mono text-sm"
+              )}
+            />
+          </div>
         </TabsContent>
 
-        <TabsContent value="preview" className="m-0 h-full overflow-hidden">
+        <TabsContent value="preview" className="flex-1 m-0 p-0 h-full overflow-hidden">
           <ScrollArea className="h-full w-full">
             <div className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
