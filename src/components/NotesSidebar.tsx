@@ -14,10 +14,13 @@ import {
   FolderOpen, 
   PlusCircle, 
   Search, 
-  X 
+  X, 
+  SidebarClose
 } from "lucide-react";
 import { Folder as FolderType, Note } from "@/types";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export const NotesSidebar: React.FC = () => {
   const { 
@@ -37,6 +40,8 @@ export const NotesSidebar: React.FC = () => {
   
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const { setOpen } = useSidebar();
 
   const handleFolderToggle = (folderId: string) => {
     setExpandedFolders(prev => ({
@@ -53,6 +58,21 @@ export const NotesSidebar: React.FC = () => {
     }
   };
 
+  const handleNoteClick = (noteId: string) => {
+    setActiveNoteId(noteId);
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
+  const handleCreateNote = (folderId: string | null) => {
+    const newNoteId = createNote(folderId);
+    if (isMobile) {
+      setOpen(false);
+    }
+    return newNoteId;
+  };
+
   // Group notes by folders
   const notesWithoutFolder = notes.filter(note => note.folderId === null);
   const notesByFolder: Record<string, Note[]> = {};
@@ -62,15 +82,27 @@ export const NotesSidebar: React.FC = () => {
   });
 
   return (
-    <div className="h-screen w-64 border-r bg-sidebar flex flex-col">
+    <div className="h-full flex flex-col bg-sidebar">
       <div className="p-4">
-        <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden"
+              onClick={() => setOpen(false)}
+            >
+              <SidebarClose className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
         <div className="flex items-center mt-4 gap-1">
           <Button 
             variant="ghost" 
             size="icon" 
             className="h-8 w-8"
-            onClick={() => createNote(null)}
+            onClick={() => handleCreateNote(null)}
           >
             <PlusCircle className="h-5 w-5 text-sidebar-foreground" />
           </Button>
@@ -132,7 +164,7 @@ export const NotesSidebar: React.FC = () => {
                 key={note.id}
                 note={note}
                 isActive={note.id === activeNoteId}
-                onClick={() => setActiveNoteId(note.id)}
+                onClick={() => handleNoteClick(note.id)}
               />
             ))}
           </div>
@@ -150,8 +182,8 @@ export const NotesSidebar: React.FC = () => {
                 isExpanded={expandedFolders[folder.id]}
                 onToggle={() => handleFolderToggle(folder.id)}
                 activeNoteId={activeNoteId}
-                onNoteClick={setActiveNoteId}
-                onCreateNote={() => createNote(folder.id)}
+                onNoteClick={handleNoteClick}
+                onCreateNote={() => handleCreateNote(folder.id)}
               />
             ))}
           </div>
