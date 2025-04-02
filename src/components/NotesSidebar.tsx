@@ -80,7 +80,7 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
   const filteredNotes = searchQuery 
     ? notes.filter(note => 
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase())
+        note.content.toLowerCase().includes(searchQuery.toLowerCase()))
     : notes;
 
   const filteredFolders = searchQuery
@@ -111,9 +111,9 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col border-r">
       <div className="p-4">
-        <h1 className="text-2xl font-serif font-bold text-sidebar-foreground">Reflect</h1>
+        <h1 className="text-2xl font-serif font-bold">Reflect</h1>
         <div className="flex items-center mt-4 gap-1">
           <Button 
             variant="ghost" 
@@ -121,13 +121,13 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
             className="h-8 w-8"
             onClick={() => createNote(null)}
           >
-            <PlusCircle className="h-5 w-5 text-sidebar-foreground" />
+            <PlusCircle className="h-5 w-5" />
           </Button>
           
           <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Folder className="h-5 w-5 text-sidebar-foreground" />
+                <Folder className="h-5 w-5" />
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -228,8 +228,8 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick }) => {
   return (
     <div
       className={cn(
-        "flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-sidebar-accent group",
-        isActive && "bg-sidebar-primary/10 text-sidebar-primary font-medium"
+        "flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-accent",
+        isActive && "bg-primary/10 text-primary font-medium"
       )}
       onClick={onClick}
     >
@@ -263,7 +263,7 @@ const FolderItem: React.FC<FolderItemProps> = ({
   return (
     <div>
       <div 
-        className="flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-sidebar-accent group"
+        className="flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-accent group relative"
         onClick={onToggle}
       >
         <div className="mr-1 text-muted-foreground">
@@ -278,13 +278,13 @@ const FolderItem: React.FC<FolderItemProps> = ({
         ) : (
           <Folder className="h-4 w-4 mr-2 text-muted-foreground" />
         )}
-        <span className="font-medium">{folder.name}</span>
+        <span className="font-medium flex-1 truncate">{folder.name}</span>
         
-        <div className="ml-auto flex">
+        <div className="flex items-center ml-2">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
               onCreateNote();
@@ -298,7 +298,7 @@ const FolderItem: React.FC<FolderItemProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-transparent text-red-500 hover:text-red-600"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Trash2 className="h-3 w-3" />
