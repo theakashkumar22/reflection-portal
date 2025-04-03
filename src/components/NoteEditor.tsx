@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,12 +60,10 @@ export const NoteEditor: React.FC = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const { toast } = useToast();
 
-  // Update local state when the active note changes
   useEffect(() => {
     if (activeNote) {
       setTitle(activeNote.title);
       setContent(activeNote.content);
-      // Reset history when changing notes
       setHistory([activeNote.content]);
       setHistoryIndex(0);
     } else {
@@ -77,7 +74,6 @@ export const NoteEditor: React.FC = () => {
     }
   }, [activeNote]);
 
-  // Save note when title or content changes (with debounce)
   useEffect(() => {
     if (!activeNote) return;
 
@@ -94,14 +90,11 @@ export const NoteEditor: React.FC = () => {
     return () => clearTimeout(saveTimer);
   }, [title, content, activeNote, updateNote]);
 
-  // Add to history when content changes (debounced)
   useEffect(() => {
     if (!activeNote || !content) return;
     
     const historyTimer = setTimeout(() => {
-      // Only add to history if content is different from last entry
       if (history[historyIndex] !== content) {
-        // Truncate history if we're not at the end
         const newHistory = history.slice(0, historyIndex + 1);
         setHistory([...newHistory, content]);
         setHistoryIndex(newHistory.length);
@@ -136,32 +129,30 @@ export const NoteEditor: React.FC = () => {
     
     setContent(newText);
     
-    // Focus back to textarea and set cursor position
     setTimeout(() => {
       textarea.focus();
-      const newCursorPos = start + before.length + selectedText.length + after.length;
+      const newCursorPos = selectedText.length > 0 
+        ? start + before.length + selectedText.length 
+        : start + before.length;
       textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   };
 
   const insertHeading = (level: number) => {
     const prefix = "#".repeat(level) + " ";
-    insertAtCursor("\n" + prefix, "\n");
+    insertAtCursor(prefix);
   };
 
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
-    // Clone the preview div to avoid modifying the original
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
     
-    // Add title at the top
     const titleElement = document.createElement("h1");
     titleElement.textContent = title;
     titleElement.style.marginBottom = "20px";
     clonedPreview.insertBefore(titleElement, clonedPreview.firstChild);
 
-    // Configure PDF options
     const options = {
       margin: 10,
       filename: `${title || 'note'}.pdf`,
@@ -170,7 +161,6 @@ export const NoteEditor: React.FC = () => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Generate PDF
     html2pdf().from(clonedPreview).set(options).save();
     
     toast({
@@ -285,7 +275,18 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("**", "**")}
+                      onClick={() => {
+                        const selectedText = textareaRef.current?.value.substring(
+                          textareaRef.current.selectionStart,
+                          textareaRef.current.selectionEnd
+                        ) || "";
+                        
+                        if (selectedText) {
+                          insertAtCursor("**", "**");
+                        } else {
+                          insertAtCursor("**", "**");
+                        }
+                      }}
                     >
                       <Bold className="h-4 w-4" />
                     </Button>
@@ -298,7 +299,18 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("*", "*")}
+                      onClick={() => {
+                        const selectedText = textareaRef.current?.value.substring(
+                          textareaRef.current.selectionStart,
+                          textareaRef.current.selectionEnd
+                        ) || "";
+                        
+                        if (selectedText) {
+                          insertAtCursor("*", "*");
+                        } else {
+                          insertAtCursor("*", "*");
+                        }
+                      }}
                     >
                       <Italic className="h-4 w-4" />
                     </Button>
@@ -333,7 +345,7 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("\n- ", "\n")}
+                      onClick={() => insertAtCursor("\n- ")}
                     >
                       <List className="h-4 w-4" />
                     </Button>
@@ -346,7 +358,7 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("\n1. ", "\n")}
+                      onClick={() => insertAtCursor("\n1. ")}
                     >
                       <ListOrdered className="h-4 w-4" />
                     </Button>
@@ -359,7 +371,18 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("[", "](url)")}
+                      onClick={() => {
+                        const selectedText = textareaRef.current?.value.substring(
+                          textareaRef.current.selectionStart,
+                          textareaRef.current.selectionEnd
+                        ) || "";
+                        
+                        if (selectedText) {
+                          insertAtCursor("[" + selectedText + "](", ")");
+                        } else {
+                          insertAtCursor("[", "](url)");
+                        }
+                      }}
                     >
                       <Link className="h-4 w-4" />
                     </Button>
@@ -372,7 +395,7 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("\n![alt text](", ")\n")}
+                      onClick={() => insertAtCursor("![alt text](", ")")}
                     >
                       <Image className="h-4 w-4" />
                     </Button>
@@ -398,7 +421,7 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("\n> ", "\n")}
+                      onClick={() => insertAtCursor("\n> ")}
                     >
                       <Quote className="h-4 w-4" />
                     </Button>

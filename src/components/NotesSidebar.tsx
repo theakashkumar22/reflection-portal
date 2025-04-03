@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Button } from "@/components/ui/button";
@@ -86,7 +85,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
     }
   };
 
-  // Filter notes and folders based on search query
   const filteredNotes = searchQuery 
     ? notes.filter(note => 
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,7 +101,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
         ))
     : folders;
 
-  // Group notes by folders
   const notesWithoutFolder = filteredNotes.filter(note => note.folderId === null);
   const notesByFolder: Record<string, Note[]> = {};
   
@@ -111,7 +108,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
     notesByFolder[folder.id] = filteredNotes.filter(note => note.folderId === folder.id);
   });
 
-  // Auto-expand folders that contain search results
   if (searchQuery) {
     filteredFolders.forEach(folder => {
       if (notesByFolder[folder.id]?.length > 0 && !expandedFolders[folder.id]) {
@@ -182,7 +178,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
       <Separator />
       
       <ScrollArea className="flex-1 py-2">
-        {/* Render notes without folders */}
         {notesWithoutFolder.length > 0 && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-muted-foreground px-4 py-2">NOTES</h3>
@@ -199,7 +194,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
           </div>
         )}
         
-        {/* Render folders and their notes */}
         {filteredFolders.length > 0 && (
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground px-4 py-2">FOLDERS</h3>
@@ -221,7 +215,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
           </div>
         )}
 
-        {/* Show message when no results found */}
         {searchQuery && filteredNotes.length === 0 && filteredFolders.length === 0 && (
           <div className="p-4 text-center text-muted-foreground">
             No notes or folders found matching "{searchQuery}"
@@ -263,7 +256,7 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick, folders, o
             <MoveHorizontal className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-48 max-h-[200px] overflow-y-auto">
           <DropdownMenuItem 
             disabled={note.folderId === null}
             onClick={(e) => {
@@ -276,18 +269,20 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick, folders, o
           
           <DropdownMenuSeparator />
           
-          {folders.map(folder => (
-            <DropdownMenuItem
-              key={folder.id}
-              disabled={note.folderId === folder.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveNote(note.id, folder.id);
-              }}
-            >
-              Move to {folder.name}
-            </DropdownMenuItem>
-          ))}
+          <div className="max-h-[150px] overflow-y-auto">
+            {folders.map(folder => (
+              <DropdownMenuItem
+                key={folder.id}
+                disabled={note.folderId === folder.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveNote(note.id, folder.id);
+                }}
+              >
+                Move to {folder.name}
+              </DropdownMenuItem>
+            ))}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Palette } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 export const ThemeSelector: React.FC = () => {
   const { currentTheme, setCurrentTheme } = useNotes();
@@ -42,23 +43,32 @@ export const ThemeSelector: React.FC = () => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          {getThemeIcon()}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {Object.values(THEMES).map((theme) => (
-          <DropdownMenuItem
-            key={theme}
-            onClick={() => setCurrentTheme(theme)}
-            className={currentTheme === theme ? "bg-accent" : ""}
-          >
-            {getThemeName(theme)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                {getThemeIcon()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {Object.values(THEMES).map((theme) => (
+                <DropdownMenuItem
+                  key={theme}
+                  onClick={() => setCurrentTheme(theme)}
+                  className={currentTheme === theme ? "bg-accent" : ""}
+                >
+                  {getThemeName(theme)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipTrigger>
+        <TooltipContent>
+          Change Theme
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
