@@ -37,6 +37,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface NotesSidebarProps {
   onNoteSelect?: () => void;
@@ -256,32 +261,34 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick, folders, o
             <MoveHorizontal className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 max-h-[200px] overflow-y-auto">
-          <DropdownMenuItem 
-            disabled={note.folderId === null}
-            onClick={(e) => {
-              e.stopPropagation();
-              onMoveNote(note.id, null);
-            }}
-          >
-            Move to No Folder
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          <div className="max-h-[150px] overflow-y-auto">
-            {folders.map(folder => (
-              <DropdownMenuItem
-                key={folder.id}
-                disabled={note.folderId === folder.id}
+        <DropdownMenuContent align="end" className="w-48">
+          <div className="max-h-[180px] overflow-hidden">
+            <ScrollArea className="h-full max-h-[180px]">
+              <DropdownMenuItem 
+                disabled={note.folderId === null}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onMoveNote(note.id, folder.id);
+                  onMoveNote(note.id, null);
                 }}
               >
-                Move to {folder.name}
+                Move to No Folder
               </DropdownMenuItem>
-            ))}
+              
+              <DropdownMenuSeparator />
+              
+              {folders.map(folder => (
+                <DropdownMenuItem
+                  key={folder.id}
+                  disabled={note.folderId === folder.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveNote(note.id, folder.id);
+                  }}
+                >
+                  Move to {folder.name}
+                </DropdownMenuItem>
+              ))}
+            </ScrollArea>
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
