@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NotesProvider } from "@/context/NotesContext";
 import { NotesSidebar } from "@/components/NotesSidebar";
 import { NoteEditor } from "@/components/NoteEditor";
+import { ThemeSelector } from "@/components/ThemeSelector";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import { PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
@@ -32,6 +32,9 @@ const Index = () => {
             <div className="p-2 border-b flex items-center shrink-0">
               <SidebarTrigger />
               <h1 className="text-lg font-serif font-medium ml-2">Reflect</h1>
+              <div className="ml-auto">
+                <ThemeSelector />
+              </div>
             </div>
             
             <div className="flex-1 h-full overflow-hidden">

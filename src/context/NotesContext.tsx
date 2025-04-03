@@ -18,6 +18,9 @@ interface NotesContextType {
   updateNote: (note: Note) => void;
   deleteNote: (id: string) => void;
   deleteFolder: (id: string) => void;
+  moveNote: (noteId: string, targetFolderId: string | null) => void;
+  currentTheme: string;
+  setCurrentTheme: (theme: string) => void;
 }
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
@@ -46,6 +49,15 @@ const defaultFolders: Folder[] = [
   },
 ];
 
+// Define available themes
+export const THEMES = {
+  LIGHT: "light",
+  DARK: "dark",
+  SEPIA: "sepia",
+  NORD: "nord",
+  DRACULA: "dracula",
+};
+
 export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
@@ -68,6 +80,12 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Add theme state
+  const [currentTheme, setCurrentTheme] = useState<string>(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme || THEMES.LIGHT;
+  });
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -81,6 +99,14 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     localStorage.setItem("activeNoteId", JSON.stringify(activeNoteId));
   }, [activeNoteId]);
+  
+  // Save theme to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem("theme", currentTheme);
+    
+    // Apply the theme to the document
+    document.documentElement.setAttribute("data-theme", currentTheme);
+  }, [currentTheme]);
 
   // Find active note
   const activeNote = activeNoteId 
@@ -138,6 +164,24 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
+  // Move a note to a different folder
+  const moveNote = (noteId: string, targetFolderId: string | null) => {
+    const updatedNotes = notes.map(note => 
+      note.id === noteId 
+        ? { ...note, folderId: targetFolderId, updatedAt: new Date().toISOString() }
+        : note
+    );
+    
+    setNotes(updatedNotes);
+    
+    toast({
+      title: "Note moved",
+      description: targetFolderId 
+        ? `Note moved to ${folders.find(f => f.id === targetFolderId)?.name} folder.`
+        : "Note moved out of folder.",
+    });
+  };
+
   // Delete a note
   const deleteNote = (id: string) => {
     setNotes(prev => prev.filter(note => note.id !== id));
@@ -185,6 +229,9 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
         updateNote,
         deleteNote,
         deleteFolder,
+        moveNote,
+        currentTheme,
+        setCurrentTheme,
       }}
     >
       {children}

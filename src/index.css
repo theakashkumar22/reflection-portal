@@ -47,7 +47,7 @@
     --sidebar-ring: 262 83% 58%;
   }
 
-  .dark {
+  [data-theme="dark"] {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -84,6 +84,123 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 262 83% 58%;
+  }
+  
+  [data-theme="sepia"] {
+    --background: 40 38% 97%;
+    --foreground: 35 25% 12%;
+
+    --card: 40 20% 96%;
+    --card-foreground: 35 25% 12%;
+
+    --popover: 40 20% 96%;
+    --popover-foreground: 35 25% 12%;
+
+    --primary: 35 60% 45%;
+    --primary-foreground: 40 38% 97%;
+
+    --secondary: 35 15% 87%;
+    --secondary-foreground: 35 25% 12%;
+
+    --muted: 35 15% 87%;
+    --muted-foreground: 35 12% 40%;
+
+    --accent: 35 15% 87%;
+    --accent-foreground: 35 25% 12%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 40 38% 97%;
+
+    --border: 35 12% 80%;
+    --input: 35 12% 80%;
+    --ring: 35 60% 45%;
+
+    --sidebar-background: 40 15% 95%;
+    --sidebar-foreground: 35 25% 12%;
+    --sidebar-primary: 35 60% 45%;
+    --sidebar-primary-foreground: 40 38% 97%;
+    --sidebar-accent: 35 15% 87%;
+    --sidebar-accent-foreground: 35 25% 12%;
+    --sidebar-border: 35 12% 80%;
+    --sidebar-ring: 35 60% 45%;
+  }
+  
+  [data-theme="nord"] {
+    --background: 218 27% 92%;
+    --foreground: 220 16% 22%;
+
+    --card: 218 27% 94%;
+    --card-foreground: 220 16% 22%;
+
+    --popover: 218 27% 94%;
+    --popover-foreground: 220 16% 22%;
+
+    --primary: 213 32% 52%;
+    --primary-foreground: 218 27% 94%;
+
+    --secondary: 220 16% 36%;
+    --secondary-foreground: 218 27% 94%;
+
+    --muted: 220 14% 86%;
+    --muted-foreground: 220 16% 45%;
+
+    --accent: 179 25% 65%;
+    --accent-foreground: 220 16% 22%;
+
+    --destructive: 354 42% 56%;
+    --destructive-foreground: 218 27% 94%;
+
+    --border: 220 14% 83%;
+    --input: 220 14% 83%;
+    --ring: 213 32% 52%;
+
+    --sidebar-background: 219 28% 88%;
+    --sidebar-foreground: 220 16% 22%;
+    --sidebar-primary: 213 32% 52%;
+    --sidebar-primary-foreground: 218 27% 94%;
+    --sidebar-accent: 220 14% 86%;
+    --sidebar-accent-foreground: 220 16% 22%;
+    --sidebar-border: 220 14% 83%;
+    --sidebar-ring: 213 32% 52%;
+  }
+  
+  [data-theme="dracula"] {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+
+    --card: 231 15% 16%;
+    --card-foreground: 60 30% 96%;
+
+    --popover: 231 15% 16%;
+    --popover-foreground: 60 30% 96%;
+
+    --primary: 326 100% 74%;
+    --primary-foreground: 60 30% 96%;
+
+    --secondary: 265 89% 78%;
+    --secondary-foreground: 60 30% 96%;
+
+    --muted: 231 15% 26%;
+    --muted-foreground: 60 30% 76%;
+
+    --accent: 135 94% 65%;
+    --accent-foreground: 231 15% 18%;
+
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 60 30% 96%;
+
+    --border: 231 15% 24%;
+    --input: 231 15% 24%;
+    --ring: 326 100% 74%;
+
+    --sidebar-background: 231 15% 15%;
+    --sidebar-foreground: 60 30% 96%;
+    --sidebar-primary: 326 100% 74%;
+    --sidebar-primary-foreground: 60 30% 96%;
+    --sidebar-accent: 231 15% 26%;
+    --sidebar-accent-foreground: 60 30% 96%;
+    --sidebar-border: 231 15% 24%;
+    --sidebar-ring: 326 100% 74%;
   }
 }
 

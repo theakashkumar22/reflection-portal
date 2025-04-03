@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,8 @@ import {
   PlusCircle, 
   Search, 
   X,
-  Trash2
+  Trash2,
+  MoveHorizontal
 } from "lucide-react";
 import { Folder as FolderType, Note } from "@/types";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface NotesSidebarProps {
   onNoteSelect?: () => void;
@@ -43,6 +52,7 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
     createNote, 
     createFolder,
     deleteFolder,
+    moveNote,
     searchQuery,
     setSearchQuery 
   } = useNotes();
@@ -182,6 +192,8 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
                 note={note}
                 isActive={note.id === activeNoteId}
                 onClick={() => handleNoteClick(note.id)}
+                folders={folders}
+                onMoveNote={moveNote}
               />
             ))}
           </div>
@@ -202,6 +214,8 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({ onNoteSelect }) => {
                 onNoteClick={handleNoteClick}
                 onCreateNote={() => createNote(folder.id)}
                 onDeleteFolder={() => deleteFolder(folder.id)}
+                folders={folders}
+                onMoveNote={moveNote}
               />
             ))}
           </div>
@@ -222,19 +236,60 @@ interface NoteItemProps {
   note: Note;
   isActive: boolean;
   onClick: () => void;
+  folders: FolderType[];
+  onMoveNote: (noteId: string, targetFolderId: string | null) => void;
 }
 
-const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick }) => {
+const NoteItem: React.FC<NoteItemProps> = ({ note, isActive, onClick, folders, onMoveNote }) => {
   return (
     <div
       className={cn(
-        "flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-accent",
+        "flex items-center px-4 py-1.5 text-sm cursor-pointer hover:bg-accent group relative",
         isActive && "bg-primary/10 text-primary font-medium"
       )}
       onClick={onClick}
     >
       <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
-      <span className="truncate">{note.title}</span>
+      <span className="truncate flex-1">{note.title}</span>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-transparent"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoveHorizontal className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem 
+            disabled={note.folderId === null}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveNote(note.id, null);
+            }}
+          >
+            Move to No Folder
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {folders.map(folder => (
+            <DropdownMenuItem
+              key={folder.id}
+              disabled={note.folderId === folder.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveNote(note.id, folder.id);
+              }}
+            >
+              Move to {folder.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
@@ -248,6 +303,8 @@ interface FolderItemProps {
   onNoteClick: (id: string) => void;
   onCreateNote: () => void;
   onDeleteFolder: () => void;
+  folders: FolderType[];
+  onMoveNote: (noteId: string, targetFolderId: string | null) => void;
 }
 
 const FolderItem: React.FC<FolderItemProps> = ({
@@ -258,7 +315,9 @@ const FolderItem: React.FC<FolderItemProps> = ({
   activeNoteId,
   onNoteClick,
   onCreateNote,
-  onDeleteFolder
+  onDeleteFolder,
+  folders,
+  onMoveNote
 }) => {
   return (
     <div>
@@ -308,8 +367,7 @@ const FolderItem: React.FC<FolderItemProps> = ({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Folder</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete this folder and all its contents?
-                  This action cannot be undone.
+                  Are you sure you want to delete this folder? Notes inside will be moved to "Notes" section.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -337,6 +395,8 @@ const FolderItem: React.FC<FolderItemProps> = ({
               note={note}
               isActive={note.id === activeNoteId}
               onClick={() => onNoteClick(note.id)}
+              folders={folders}
+              onMoveNote={onMoveNote}
             />
           ))}
         </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,25 +17,63 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Edit, Eye, Trash2 } from "lucide-react";
+import { 
+  Bold, 
+  Italic, 
+  List, 
+  ListOrdered, 
+  Link,
+  Image,
+  Code,
+  Quote,
+  Edit,
+  Eye, 
+  FileDown,
+  Heading1,
+  Heading2,
+  Heading3,
+  Trash2,
+  Undo,
+  Redo,
+  PanelRight
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import html2pdf from "html2pdf.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 export const NoteEditor: React.FC = () => {
   const { activeNote, updateNote, deleteNote } = useNotes();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [activeTab, setActiveTab] = useState<string>("edit");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const { toast } = useToast();
 
   // Update local state when the active note changes
   useEffect(() => {
     if (activeNote) {
       setTitle(activeNote.title);
       setContent(activeNote.content);
+      // Reset history when changing notes
+      setHistory([activeNote.content]);
+      setHistoryIndex(0);
     } else {
       setTitle("");
       setContent("");
+      setHistory([]);
+      setHistoryIndex(-1);
     }
   }, [activeNote]);
 
@@ -54,6 +93,91 @@ export const NoteEditor: React.FC = () => {
 
     return () => clearTimeout(saveTimer);
   }, [title, content, activeNote, updateNote]);
+
+  // Add to history when content changes (debounced)
+  useEffect(() => {
+    if (!activeNote || !content) return;
+    
+    const historyTimer = setTimeout(() => {
+      // Only add to history if content is different from last entry
+      if (history[historyIndex] !== content) {
+        // Truncate history if we're not at the end
+        const newHistory = history.slice(0, historyIndex + 1);
+        setHistory([...newHistory, content]);
+        setHistoryIndex(newHistory.length);
+      }
+    }, 1000);
+
+    return () => clearTimeout(historyTimer);
+  }, [content]);
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setContent(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setContent(history[historyIndex + 1]);
+    }
+  };
+
+  const insertAtCursor = (before: string, after: string = "") => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+    const newText = content.substring(0, start) + before + selectedText + after + content.substring(end);
+    
+    setContent(newText);
+    
+    // Focus back to textarea and set cursor position
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + before.length + selectedText.length + after.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  const insertHeading = (level: number) => {
+    const prefix = "#".repeat(level) + " ";
+    insertAtCursor("\n" + prefix, "\n");
+  };
+
+  const exportToPdf = () => {
+    if (!activeNote || !previewRef.current) return;
+
+    // Clone the preview div to avoid modifying the original
+    const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
+    
+    // Add title at the top
+    const titleElement = document.createElement("h1");
+    titleElement.textContent = title;
+    titleElement.style.marginBottom = "20px";
+    clonedPreview.insertBefore(titleElement, clonedPreview.firstChild);
+
+    // Configure PDF options
+    const options = {
+      margin: 10,
+      filename: `${title || 'note'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Generate PDF
+    html2pdf().from(clonedPreview).set(options).save();
+    
+    toast({
+      title: "PDF Exported",
+      description: `"${title}" has been exported as PDF.`
+    });
+  };
 
   if (!activeNote) {
     return (
@@ -78,6 +202,19 @@ export const NoteEditor: React.FC = () => {
           placeholder="Note title..."
         />
         <div className="flex gap-2 ml-auto">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={exportToPdf}
+              >
+                <FileDown className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Export as PDF</TooltipContent>
+          </Tooltip>
+          
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="icon">
@@ -112,20 +249,170 @@ export const NoteEditor: React.FC = () => {
         className="flex-1 flex flex-col h-full overflow-hidden"
       >
         <div className="px-4 border-b shrink-0">
-          <TabsList className="h-10 mx-0">
-            <TabsTrigger value="edit" className="flex items-center gap-1.5">
-              <Edit className="h-4 w-4" />
-              <span>Edit</span>
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-1.5">
-              <Eye className="h-4 w-4" />
-              <span>Preview</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-between items-center">
+            <TabsList className="h-10 mx-0">
+              <TabsTrigger value="edit" className="flex items-center gap-1.5">
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-1.5">
+                <Eye className="h-4 w-4" />
+                <span>Preview</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            {activeTab === "edit" && (
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                >
+                  <Undo className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                >
+                  <Redo className="h-4 w-4" />
+                </Button>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("**", "**")}
+                    >
+                      <Bold className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Bold</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("*", "*")}
+                    >
+                      <Italic className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Italic</TooltipContent>
+                </Tooltip>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Heading1 className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => insertHeading(1)}>
+                      <Heading1 className="h-4 w-4 mr-2" />
+                      Heading 1
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => insertHeading(2)}>
+                      <Heading2 className="h-4 w-4 mr-2" />
+                      Heading 2
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => insertHeading(3)}>
+                      <Heading3 className="h-4 w-4 mr-2" />
+                      Heading 3
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("\n- ", "\n")}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Bullet List</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("\n1. ", "\n")}
+                    >
+                      <ListOrdered className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Numbered List</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("[", "](url)")}
+                    >
+                      <Link className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Link</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("\n![alt text](", ")\n")}
+                    >
+                      <Image className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Image</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("\n```\n", "\n```\n")}
+                    >
+                      <Code className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Code Block</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => insertAtCursor("\n> ", "\n")}
+                    >
+                      <Quote className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Blockquote</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+          </div>
         </div>
 
         <TabsContent value="edit" className="flex-1 m-0 p-0 h-full overflow-hidden">
           <Textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Start writing your note..."
@@ -138,7 +425,7 @@ export const NoteEditor: React.FC = () => {
 
         <TabsContent value="preview" className="m-0 h-full overflow-hidden">
           <ScrollArea className="h-full w-full">
-            <div className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
+            <div ref={previewRef} className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>
