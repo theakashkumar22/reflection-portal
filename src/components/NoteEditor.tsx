@@ -265,27 +265,23 @@ export const NoteEditor: React.FC = () => {
     if (!activeNote || !previewRef.current) return;
 
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
-    
-    const titleElement = document.createElement("h1");
-    titleElement.textContent = title;
-    titleElement.style.marginBottom = "20px";
-    clonedPreview.insertBefore(titleElement, clonedPreview.firstChild);
 
     const options = {
-      margin: 10,
-      filename: `${title || 'note'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 10,
+        filename: `${title || 'note'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().from(clonedPreview).set(options).save();
-    
+
     toast({
-      title: "PDF Exported",
-      description: `"${title}" has been exported as PDF.`
+        title: "PDF Exported",
+        description: `"${title}" has been exported as PDF.`
     });
-  };
+};
+
 
   if (!activeNote) {
     return (
