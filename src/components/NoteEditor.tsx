@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,7 +35,7 @@ import {
   Trash2,
   Undo,
   Redo,
-  PanelRight
+  Table
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -48,6 +49,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const NoteEditor: React.FC = () => {
   const { activeNote, updateNote, deleteNote } = useNotes();
@@ -59,6 +67,14 @@ export const NoteEditor: React.FC = () => {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const { toast } = useToast();
+
+  // Dialog states
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [tableDialogOpen, setTableDialogOpen] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
 
   useEffect(() => {
     if (activeNote) {
@@ -104,6 +120,67 @@ export const NoteEditor: React.FC = () => {
     return () => clearTimeout(historyTimer);
   }, [content]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      // Auto-continue lists
+      const textarea = e.currentTarget;
+      const { selectionStart } = textarea;
+      const currentLine = content.substring(0, selectionStart).split('\n').pop() || '';
+      
+      // Check for bullet points
+      const bulletMatch = currentLine.match(/^(\s*)([-*+])\s/);
+      if (bulletMatch) {
+        // If the line is empty except for the bullet, remove the bullet
+        if (currentLine.trim() === `${bulletMatch[2]} `) {
+          e.preventDefault();
+          const beforeBullet = content.substring(0, selectionStart - bulletMatch[0].length);
+          const afterBullet = content.substring(selectionStart);
+          setContent(beforeBullet + afterBullet);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = beforeBullet.length;
+          }, 0);
+          return;
+        }
+        
+        e.preventDefault();
+        const indent = bulletMatch[1];
+        const bullet = bulletMatch[2];
+        const insertion = `\n${indent}${bullet} `;
+        insertAtCursor(insertion, '');
+        return;
+      }
+      
+      // Check for numbered lists
+      const numberedMatch = currentLine.match(/^(\s*)(\d+)\.\s/);
+      if (numberedMatch) {
+        // If the line is empty except for the number, remove the numbered item
+        if (currentLine.trim() === `${numberedMatch[2]}. `) {
+          e.preventDefault();
+          const beforeNumber = content.substring(0, selectionStart - numberedMatch[0].length);
+          const afterNumber = content.substring(selectionStart);
+          setContent(beforeNumber + afterNumber);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = beforeNumber.length;
+          }, 0);
+          return;
+        }
+        
+        e.preventDefault();
+        const indent = numberedMatch[1];
+        const num = parseInt(numberedMatch[2]) + 1;
+        const insertion = `\n${indent}${num}. `;
+        insertAtCursor(insertion, '');
+        return;
+      }
+    }
+
+    // Handle tab key for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      insertAtCursor('  ', '');
+    }
+  };
+
   const handleUndo = () => {
     if (historyIndex > 0) {
       setHistoryIndex(historyIndex - 1);
@@ -129,18 +206,59 @@ export const NoteEditor: React.FC = () => {
     
     setContent(newText);
     
+    // Position cursor between formatting marks if no text is selected
     setTimeout(() => {
       textarea.focus();
-      const newCursorPos = selectedText.length > 0 
-        ? start + before.length + selectedText.length 
-        : start + before.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      if (selectedText.length === 0 && after) {
+        // If no text is selected and there's an "after" part, put cursor in the middle
+        const newCursorPos = start + before.length;
+        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+      } else {
+        // If text is selected, position cursor after the selected text and formatting
+        const newCursorPos = start + before.length + selectedText.length + after.length;
+        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+      }
     }, 0);
   };
 
   const insertHeading = (level: number) => {
     const prefix = "#".repeat(level) + " ";
     insertAtCursor(prefix);
+  };
+
+  const handleInsertImage = () => {
+    if (imageUrl.trim()) {
+      const imageMarkdown = `![${imageAlt || 'image'}](${imageUrl})`;
+      insertAtCursor(imageMarkdown, '');
+      setImageDialogOpen(false);
+      setImageUrl('');
+      setImageAlt('');
+    }
+  };
+
+  const handleInsertTable = () => {
+    if (tableRows > 0 && tableCols > 0) {
+      let tableMarkdown = '\n';
+      
+      // Create header row
+      const headerRow = '| ' + Array(tableCols).fill('Header').join(' | ') + ' |';
+      tableMarkdown += headerRow + '\n';
+      
+      // Create separator row
+      const separatorRow = '| ' + Array(tableCols).fill('---').join(' | ') + ' |';
+      tableMarkdown += separatorRow + '\n';
+      
+      // Create data rows
+      for (let i = 0; i < tableRows - 1; i++) {
+        const dataRow = '| ' + Array(tableCols).fill('Cell').join(' | ') + ' |';
+        tableMarkdown += dataRow + '\n';
+      }
+      
+      insertAtCursor(tableMarkdown, '');
+      setTableDialogOpen(false);
+      setTableRows(3);
+      setTableCols(3);
+    }
   };
 
   const exportToPdf = () => {
@@ -276,9 +394,10 @@ export const NoteEditor: React.FC = () => {
                       variant="ghost" 
                       size="icon"
                       onClick={() => {
-                        const selectedText = textareaRef.current?.value.substring(
-                          textareaRef.current.selectionStart,
-                          textareaRef.current.selectionEnd
+                        const textarea = textareaRef.current;
+                        const selectedText = textarea?.value.substring(
+                          textarea.selectionStart,
+                          textarea.selectionEnd
                         ) || "";
                         
                         if (selectedText) {
@@ -300,9 +419,10 @@ export const NoteEditor: React.FC = () => {
                       variant="ghost" 
                       size="icon"
                       onClick={() => {
-                        const selectedText = textareaRef.current?.value.substring(
-                          textareaRef.current.selectionStart,
-                          textareaRef.current.selectionEnd
+                        const textarea = textareaRef.current;
+                        const selectedText = textarea?.value.substring(
+                          textarea.selectionStart,
+                          textarea.selectionEnd
                         ) || "";
                         
                         if (selectedText) {
@@ -372,9 +492,10 @@ export const NoteEditor: React.FC = () => {
                       variant="ghost" 
                       size="icon"
                       onClick={() => {
-                        const selectedText = textareaRef.current?.value.substring(
-                          textareaRef.current.selectionStart,
-                          textareaRef.current.selectionEnd
+                        const textarea = textareaRef.current;
+                        const selectedText = textarea?.value.substring(
+                          textarea.selectionStart,
+                          textarea.selectionEnd
                         ) || "";
                         
                         if (selectedText) {
@@ -395,7 +516,7 @@ export const NoteEditor: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => insertAtCursor("![alt text](", ")")}
+                      onClick={() => setImageDialogOpen(true)}
                     >
                       <Image className="h-4 w-4" />
                     </Button>
@@ -428,6 +549,19 @@ export const NoteEditor: React.FC = () => {
                   </TooltipTrigger>
                   <TooltipContent>Blockquote</TooltipContent>
                 </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setTableDialogOpen(true)}
+                    >
+                      <Table className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Table</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -438,6 +572,7 @@ export const NoteEditor: React.FC = () => {
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Start writing your note..."
             className={cn(
               "h-full w-full resize-none rounded-none border-none focus-visible:ring-0 p-4",
@@ -456,6 +591,88 @@ export const NoteEditor: React.FC = () => {
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      {/* Image Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insert Image</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <label htmlFor="imageUrl" className="block text-sm font-medium mb-1">
+                Image URL
+              </label>
+              <Input
+                id="imageUrl"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <div>
+              <label htmlFor="imageAlt" className="block text-sm font-medium mb-1">
+                Alt Text (optional)
+              </label>
+              <Input
+                id="imageAlt"
+                value={imageAlt}
+                onChange={(e) => setImageAlt(e.target.value)}
+                placeholder="Description of the image"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleInsertImage}>Insert Image</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Table Dialog */}
+      <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insert Table</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <label htmlFor="tableRows" className="block text-sm font-medium mb-1">
+                Rows (including header)
+              </label>
+              <Input
+                id="tableRows"
+                type="number"
+                min="2"
+                max="20"
+                value={tableRows}
+                onChange={(e) => setTableRows(parseInt(e.target.value) || 2)}
+              />
+            </div>
+            <div>
+              <label htmlFor="tableCols" className="block text-sm font-medium mb-1">
+                Columns
+              </label>
+              <Input
+                id="tableCols"
+                type="number"
+                min="1"
+                max="10"
+                value={tableCols}
+                onChange={(e) => setTableCols(parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTableDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleInsertTable}>Insert Table</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
