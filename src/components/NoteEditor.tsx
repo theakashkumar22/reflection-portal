@@ -618,8 +618,9 @@ export const NoteEditor: React.FC = () => {
               className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor"
             >
               <style>{`
-                .note-editor {
-                  white-space: pre-line;
+                .note-editor { 
+                  white-space: pre-wrap; 
+                  word-wrap: break-word; 
                 }
                 .note-editor img {
                   max-width: 100%;
@@ -681,10 +682,13 @@ export const NoteEditor: React.FC = () => {
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  p: ({ node, children }) => {
-                    return <p className="whitespace-pre-line">{children}</p>;
+                  p: ({ children }) => {
+                    const trimmedChildren = React.Children.map(children, child => 
+                      typeof child === 'string' ? child.trim() : child
+                    );
+                    return <p>{trimmedChildren}</p>;
                   },
-                  img: ({ node, src, alt, ...props }) => {
+                  img: ({ src, alt, ...props }) => {
                     return (
                       <img 
                         src={src} 
@@ -694,36 +698,37 @@ export const NoteEditor: React.FC = () => {
                       />
                     );
                   },
-                  table: ({ node, children }) => {
+                  table: ({ children }) => {
                     return (
                       <div className="overflow-x-auto my-4">
                         <table className="w-full border-collapse">{children}</table>
                       </div>
                     );
                   },
-                  th: ({ node, children }) => {
+                  th: ({ children }) => {
                     return (
                       <th className="border border-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 text-left font-medium">
                         {children}
                       </th>
                     );
                   },
-                  td: ({ node, children }) => {
+                  td: ({ children }) => {
                     return (
                       <td className="border border-slate-300 px-4 py-2">
                         {children}
                       </td>
                     );
                   },
-                  pre: ({ node, children }) => {
+                  pre: ({ children }) => {
                     return (
                       <pre className="bg-slate-100 dark:bg-slate-800 rounded-md p-4 overflow-x-auto my-4">
                         {children}
                       </pre>
                     );
                   },
-                  code: ({ node, inline, children }) => {
-                    return inline ? (
+                  code: ({ node, children }) => {
+                    const isInline = node.type === 'element' && node.tagName !== 'pre';
+                    return isInline ? (
                       <code className="bg-slate-100 dark:bg-slate-800 rounded px-1 py-0.5 font-mono text-sm">
                         {children}
                       </code>
@@ -731,7 +736,7 @@ export const NoteEditor: React.FC = () => {
                       <code className="font-mono text-sm">{children}</code>
                     );
                   },
-                  blockquote: ({ node, children }) => {
+                  blockquote: ({ children }) => {
                     return (
                       <blockquote className="border-l-4 border-slate-300 pl-4 italic my-4">
                         {children}
