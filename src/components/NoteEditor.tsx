@@ -264,7 +264,34 @@ export const NoteEditor: React.FC = () => {
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
+    // Clone the preview content for PDF export
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
+    
+    // Enhance the styles for PDF export
+    const images = clonedPreview.querySelectorAll('img');
+    images.forEach((img) => {
+      (img as HTMLElement).setAttribute('style', 'max-width: 100%; height: auto; margin: 1rem 0;');
+    });
+    
+    const tables = clonedPreview.querySelectorAll('table');
+    tables.forEach((table) => {
+      (table as HTMLElement).setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 1rem 0;');
+      
+      const cells = table.querySelectorAll('th, td');
+      cells.forEach((cell) => {
+        (cell as HTMLElement).setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
+      });
+      
+      const headerCells = table.querySelectorAll('th');
+      headerCells.forEach((cell) => {
+        (cell as HTMLElement).setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;');
+      });
+    });
+    
+    const lists = clonedPreview.querySelectorAll('ul, ol');
+    lists.forEach((list) => {
+      (list as HTMLElement).setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
+    });
 
     const options = {
         margin: 10,
@@ -280,8 +307,7 @@ export const NoteEditor: React.FC = () => {
         title: "PDF Exported",
         description: `"${title}" has been exported as PDF.`
     });
-};
-
+  };
 
   if (!activeNote) {
     return (
@@ -580,7 +606,80 @@ export const NoteEditor: React.FC = () => {
         <TabsContent value="preview" className="m-0 h-full overflow-hidden">
           <ScrollArea className="h-full w-full">
             <div ref={previewRef} className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  // Enhanced image rendering
+                  img: ({node, ...props}) => (
+                    <div className="my-4 flex justify-center">
+                      <img 
+                        {...props} 
+                        className="rounded-md max-w-full max-h-[500px] object-contain shadow-sm" 
+                        style={{display: 'block'}}
+                        alt={props.alt || 'Image'}
+                      />
+                    </div>
+                  ),
+                  // Enhanced table rendering
+                  table: ({node, ...props}) => (
+                    <div className="my-6 overflow-x-auto">
+                      <table 
+                        {...props} 
+                        className="min-w-full border divide-y divide-gray-300 rounded-md" 
+                      />
+                    </div>
+                  ),
+                  thead: ({node, ...props}) => (
+                    <thead {...props} className="bg-muted" />
+                  ),
+                  th: ({node, ...props}) => (
+                    <th 
+                      {...props} 
+                      className="py-3 px-4 text-left text-sm font-semibold border-b border-r last:border-r-0" 
+                    />
+                  ),
+                  td: ({node, ...props}) => (
+                    <td 
+                      {...props} 
+                      className="py-2 px-4 text-sm border-b border-r last:border-r-0" 
+                    />
+                  ),
+                  // Enhanced list rendering
+                  ul: ({node, ...props}) => (
+                    <ul {...props} className="list-disc pl-6 my-4 space-y-2" />
+                  ),
+                  ol: ({node, ...props}) => (
+                    <ol {...props} className="list-decimal pl-6 my-4 space-y-2" />
+                  ),
+                  li: ({node, ...props}) => (
+                    <li {...props} className="pl-1 py-1" />
+                  ),
+                  // Fixed paragraph spacing
+                  p: ({node, ...props}) => {
+                    // Don't wrap text in paragraphs when it's inside certain elements
+                    const parent = node?.parent as any;
+                    const parentTagName = parent?.tagName?.toLowerCase?.();
+                    
+                    // Skip adding paragraph for certain container elements
+                    if (["li", "th", "td"].includes(parentTagName)) {
+                      return <>{props.children}</>;
+                    }
+                    
+                    return <p {...props} className="my-2 whitespace-pre-line" />;
+                  },
+                  // Enhanced code display
+                  code: ({node, inline, className, children, ...props}) => {
+                    if (inline) {
+                      return <code className="px-1 py-0.5 rounded bg-muted text-sm" {...props}>{children}</code>;
+                    }
+                    return (
+                      <pre className="p-4 rounded-md bg-muted overflow-x-auto my-4">
+                        <code className="text-sm" {...props}>{children}</code>
+                      </pre>
+                    );
+                  },
+                }}
+              >
                 {content}
               </ReactMarkdown>
             </div>
