@@ -266,39 +266,50 @@ export const NoteEditor: React.FC = () => {
     // Clone the preview content to manipulate it before PDF generation
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
     
-    // Style fixes for PDF export
+    // Style fixes for PDF export using safe methods
     const images = clonedPreview.querySelectorAll('img');
-    images.forEach(img => {
-      // Set max width for images in PDF
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
-      img.style.margin = '10px 0';
+    images.forEach((img: HTMLImageElement) => {
+      img.setAttribute('style', `
+        max-width: 100%;
+        height: auto;
+        margin: 10px 0;
+      `);
     });
 
     // Style tables for PDF
     const tables = clonedPreview.querySelectorAll('table');
-    tables.forEach(table => {
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.marginBottom = '16px';
+    tables.forEach((table: HTMLTableElement) => {
+      table.setAttribute('style', `
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+      `);
       
       const cells = table.querySelectorAll('th, td');
-      cells.forEach(cell => {
-        cell.setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
+      cells.forEach((cell: HTMLTableCellElement) => {
+        cell.setAttribute('style', `
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+        `);
       });
       
       const headers = table.querySelectorAll('th');
-      headers.forEach(header => {
-        header.style.backgroundColor = '#f2f2f2';
-        header.style.fontWeight = 'bold';
+      headers.forEach((header: HTMLTableHeaderCellElement) => {
+        header.setAttribute('style', `
+          background-color: #f2f2f2;
+          font-weight: bold;
+        `);
       });
     });
 
     // Style lists for PDF
     const lists = clonedPreview.querySelectorAll('ul, ol');
-    lists.forEach(list => {
-      list.style.paddingLeft = '20px';
-      list.style.marginBottom = '16px';
+    lists.forEach((list: HTMLUListElement | HTMLOListElement) => {
+      list.setAttribute('style', `
+        padding-left: 20px;
+        margin-bottom: 16px;
+      `);
     });
 
     const options = {
