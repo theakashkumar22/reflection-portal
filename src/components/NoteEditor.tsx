@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -263,54 +264,7 @@ export const NoteEditor: React.FC = () => {
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
-    // Clone the preview content to manipulate it before PDF generation
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
-    
-    // Style fixes for PDF export using safe methods
-    const images = clonedPreview.querySelectorAll('img');
-    images.forEach((img: HTMLImageElement) => {
-      img.setAttribute('style', `
-        max-width: 100%;
-        height: auto;
-        margin: 10px 0;
-      `);
-    });
-
-    // Style tables for PDF
-    const tables = clonedPreview.querySelectorAll('table');
-    tables.forEach((table: HTMLTableElement) => {
-      table.setAttribute('style', `
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 16px;
-      `);
-      
-      const cells = table.querySelectorAll('th, td');
-      cells.forEach((cell: HTMLTableCellElement) => {
-        cell.setAttribute('style', `
-          border: 1px solid #ddd;
-          padding: 8px;
-          text-align: left;
-        `);
-      });
-      
-      const headers = table.querySelectorAll('th');
-      headers.forEach((header: HTMLTableHeaderCellElement) => {
-        header.setAttribute('style', `
-          background-color: #f2f2f2;
-          font-weight: bold;
-        `);
-      });
-    });
-
-    // Style lists for PDF
-    const lists = clonedPreview.querySelectorAll('ul, ol');
-    lists.forEach((list: HTMLUListElement | HTMLOListElement) => {
-      list.setAttribute('style', `
-        padding-left: 20px;
-        margin-bottom: 16px;
-      `);
-    });
 
     const options = {
         margin: 10,
@@ -326,7 +280,8 @@ export const NoteEditor: React.FC = () => {
         title: "PDF Exported",
         description: `"${title}" has been exported as PDF.`
     });
-  };
+};
+
 
   if (!activeNote) {
     return (
@@ -624,138 +579,8 @@ export const NoteEditor: React.FC = () => {
 
         <TabsContent value="preview" className="m-0 h-full overflow-hidden">
           <ScrollArea className="h-full w-full">
-            <div 
-              ref={previewRef} 
-              className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor"
-            >
-              <style>{`
-                .note-editor { 
-                  white-space: pre-wrap; 
-                  word-wrap: break-word; 
-                }
-                .note-editor img {
-                  max-width: 100%;
-                  height: auto;
-                  margin: 1em 0;
-                  display: block;
-                }
-                .note-editor p {
-                  margin-bottom: 1em;
-                }
-                .note-editor h1, .note-editor h2, .note-editor h3 {
-                  margin-top: 1.5em;
-                  margin-bottom: 0.5em;
-                }
-                .note-editor ul, .note-editor ol {
-                  padding-left: 1.5em;
-                  margin-bottom: 1em;
-                }
-                .note-editor li {
-                  margin-bottom: 0.5em;
-                }
-                .note-editor blockquote {
-                  border-left: 4px solid #e2e8f0;
-                  padding-left: 1em;
-                  font-style: italic;
-                  margin: 1em 0;
-                }
-                .note-editor pre {
-                  background-color: #f1f5f9;
-                  border-radius: 0.375rem;
-                  padding: 1em;
-                  overflow-x: auto;
-                  margin: 1em 0;
-                }
-                .note-editor code {
-                  font-family: monospace;
-                  padding: 0.2em 0.4em;
-                  background-color: #f1f5f9;
-                  border-radius: 0.25rem;
-                }
-                .note-editor table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 1em 0;
-                }
-                .note-editor th, .note-editor td {
-                  border: 1px solid #e2e8f0;
-                  padding: 0.5em;
-                  text-align: left;
-                }
-                .note-editor th {
-                  background-color: #f8fafc;
-                  font-weight: bold;
-                }
-                .note-editor tr:nth-child(even) {
-                  background-color: #f8fafc;
-                }
-              `}</style>
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  p: ({ children }) => {
-                    const trimmedChildren = React.Children.map(children, child => 
-                      typeof child === 'string' ? child.trim() : child
-                    );
-                    return <p>{trimmedChildren}</p>;
-                  },
-                  img: ({ src, alt, ...props }) => {
-                    return (
-                      <img 
-                        src={src} 
-                        alt={alt || ''} 
-                        className="max-w-full h-auto rounded-md my-4"
-                        {...props}
-                      />
-                    );
-                  },
-                  table: ({ children }) => {
-                    return (
-                      <div className="overflow-x-auto my-4">
-                        <table className="w-full border-collapse">{children}</table>
-                      </div>
-                    );
-                  },
-                  th: ({ children }) => {
-                    return (
-                      <th className="border border-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 text-left font-medium">
-                        {children}
-                      </th>
-                    );
-                  },
-                  td: ({ children }) => {
-                    return (
-                      <td className="border border-slate-300 px-4 py-2">
-                        {children}
-                      </td>
-                    );
-                  },
-                  pre: ({ children }) => {
-                    return (
-                      <pre className="bg-slate-100 dark:bg-slate-800 rounded-md p-4 overflow-x-auto my-4">
-                        {children}
-                      </pre>
-                    );
-                  },
-                  code: ({ node, children }) => {
-                    const isInline = node.type === 'element' && node.tagName !== 'pre';
-                    return isInline ? (
-                      <code className="bg-slate-100 dark:bg-slate-800 rounded px-1 py-0.5 font-mono text-sm">
-                        {children}
-                      </code>
-                    ) : (
-                      <code className="font-mono text-sm">{children}</code>
-                    );
-                  },
-                  blockquote: ({ children }) => {
-                    return (
-                      <blockquote className="border-l-4 border-slate-300 pl-4 italic my-4">
-                        {children}
-                      </blockquote>
-                    );
-                  },
-                }}
-              >
+            <div ref={previewRef} className="p-6 prose prose-sm sm:prose-base lg:prose-lg max-w-full note-editor">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>
             </div>
