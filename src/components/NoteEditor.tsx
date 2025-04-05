@@ -35,7 +35,8 @@ import {
   Trash2,
   Undo,
   Redo,
-  Table
+  Table,
+  FilePlus
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -58,7 +59,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const NoteEditor: React.FC = () => {
-  const { activeNote, updateNote, deleteNote } = useNotes();
+  const { activeNote, updateNote, deleteNote, createNote } = useNotes();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [activeTab, setActiveTab] = useState<string>("edit");
@@ -261,52 +262,184 @@ export const NoteEditor: React.FC = () => {
     }
   };
 
+  const handleCreateNewNote = () => {
+    // Create a new note in the same folder as the current note
+    const folderId = activeNote ? activeNote.folderId : null;
+    createNote(folderId);
+    
+    toast({
+      title: "New Note Created",
+      description: folderId ? "Created in the current folder" : "Created in root"
+    });
+  };
+
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
+    // Create a temporary container to style for PDF export
+    const tempContainer = document.createElement('div');
+    tempContainer.className = 'pdf-export-container';
+    tempContainer.style.padding = '20px';
+    tempContainer.style.maxWidth = '700px';
+    tempContainer.style.margin = '0 auto';
+    
     // Clone the preview content for PDF export
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
+    
+    // Remove any large margins and paddings that might cause extra pages
+    clonedPreview.style.margin = '0';
+    clonedPreview.style.padding = '0';
+    
+    // Add title to the PDF
+    const titleElement = document.createElement('h1');
+    titleElement.textContent = title || 'Untitled Note';
+    titleElement.style.marginBottom = '20px';
+    titleElement.style.fontSize = '24px';
+    titleElement.style.fontWeight = 'bold';
+    tempContainer.appendChild(titleElement);
+    
+    // Add a separator line
+    const separator = document.createElement('hr');
+    separator.style.marginBottom = '20px';
+    tempContainer.appendChild(separator);
     
     // Enhance the styles for PDF export
     const images = clonedPreview.querySelectorAll('img');
     images.forEach((img) => {
-      (img as HTMLElement).setAttribute('style', 'max-width: 100%; height: auto; margin: 1rem 0;');
+      const imgElement = img as HTMLImageElement;
+      imgElement.style.maxWidth = '100%';
+      imgElement.style.height = 'auto';
+      imgElement.style.margin = '10px 0';
+      // Set a reasonable max-height to prevent large images causing extra pages
+      imgElement.style.maxHeight = '300px';
+      imgElement.style.objectFit = 'contain';
     });
     
     const tables = clonedPreview.querySelectorAll('table');
     tables.forEach((table) => {
-      (table as HTMLElement).setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 1rem 0;');
+      const tableElement = table as HTMLTableElement;
+      tableElement.style.width = '100%';
+      tableElement.style.borderCollapse = 'collapse';
+      tableElement.style.margin = '10px 0';
+      tableElement.style.fontSize = '11px'; // Reduced from 12px
       
       const cells = table.querySelectorAll('th, td');
       cells.forEach((cell) => {
-        (cell as HTMLElement).setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
+        const cellElement = cell as HTMLTableCellElement;
+        cellElement.style.border = '1px solid #ddd';
+        cellElement.style.padding = '4px'; // Reduced from 6px
+        cellElement.style.textAlign = 'left';
       });
       
       const headerCells = table.querySelectorAll('th');
       headerCells.forEach((cell) => {
-        (cell as HTMLElement).setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;');
+        const headerCell = cell as HTMLTableCellElement;
+        headerCell.style.backgroundColor = '#f2f2f2';
+        headerCell.style.border = '1px solid #ddd';
+        headerCell.style.padding = '4px'; // Reduced from 6px
+        headerCell.style.textAlign = 'left';
+        headerCell.style.fontWeight = 'bold';
       });
     });
     
+    // Improve list styling for PDF export
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
-      (list as HTMLElement).setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
+      const listElement = list as HTMLUListElement | HTMLOListElement;
+      listElement.style.paddingLeft = '20px'; // Ensure there's space for bullets/numbers
+      listElement.style.margin = '8px 0';
+      
+      if (listElement.tagName === 'UL') {
+        // For bullet lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '6px';
+          liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
+          liElement.style.listStylePosition = 'outside'; // Position bullets outside
+        });
+      } else if (listElement.tagName === 'OL') {
+        // For numbered lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '6px';
+          liElement.style.listStyleType = 'decimal'; // Ensure number style is set
+          liElement.style.listStylePosition = 'outside'; // Position numbers outside
+        });
+      }
     });
-
+    
+    const codeBlocks = clonedPreview.querySelectorAll('pre');
+    codeBlocks.forEach((block) => {
+      const preElement = block as HTMLPreElement;
+      preElement.style.padding = '6px'; // Reduced from 8px
+      preElement.style.margin = '8px 0'; // Reduced from 10px
+      preElement.style.backgroundColor = '#f5f5f5';
+      preElement.style.fontSize = '10px'; // Reduced from 11px
+      preElement.style.whiteSpace = 'pre-wrap';
+      preElement.style.overflowX = 'hidden';
+    });
+    
+    const paragraphs = clonedPreview.querySelectorAll('p');
+    paragraphs.forEach((p) => {
+      const pElement = p as HTMLParagraphElement;
+      pElement.style.margin = '6px 0'; // Reduced from 8px
+      pElement.style.lineHeight = '1.4'; // Slightly reduced from 1.5
+    });
+    
+    const headings = clonedPreview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach((heading) => {
+      const headingElement = heading as HTMLHeadingElement;
+      headingElement.style.marginTop = '12px'; // Reduced from 16px
+      headingElement.style.marginBottom = '6px'; // Reduced from 8px
+      headingElement.style.lineHeight = '1.2';
+    });
+    
+    // Add the cloned and styled content to our temp container
+    tempContainer.appendChild(clonedPreview);
+    
+    // Add the temp container to the document temporarily
+    document.body.appendChild(tempContainer);
+    
+    // Configure the PDF options
     const options = {
-        margin: 10,
-        filename: `${title || 'note'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: [10, 10, 10, 10], // Reduced from [15, 15, 15, 15] to save space
+      filename: `${title || 'note'}.pdf`,
+      image: { type: 'jpeg', quality: 0.95 }, // Slightly reduced quality
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait',
+        compress: true
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().from(clonedPreview).set(options).save();
-
-    toast({
-        title: "PDF Exported",
-        description: `"${title}" has been exported as PDF.`
-    });
+    // Generate the PDF
+    html2pdf()
+      .from(tempContainer)
+      .set(options)
+      .save()
+      .then(() => {
+        // Remove the temp container after PDF is generated
+        document.body.removeChild(tempContainer);
+        
+        toast({
+          title: "PDF Exported",
+          description: `"${title}" has been exported as PDF.`
+        });
+      });
   };
 
   if (!activeNote) {
@@ -332,6 +465,19 @@ export const NoteEditor: React.FC = () => {
           placeholder="Note title..."
         />
         <div className="flex gap-2 ml-auto">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleCreateNewNote}
+              >
+                <FilePlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Create New Note</TooltipContent>
+          </Tooltip>
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
@@ -379,7 +525,7 @@ export const NoteEditor: React.FC = () => {
         className="flex-1 flex flex-col h-full overflow-hidden"
       >
         <div className="px-4 border-b shrink-0">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center">
             <TabsList className="h-10 mx-0">
               <TabsTrigger value="edit" className="flex items-center gap-1.5">
                 <Edit className="h-4 w-4" />
@@ -392,7 +538,7 @@ export const NoteEditor: React.FC = () => {
             </TabsList>
             
             {activeTab === "edit" && (
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1 my-1">
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -609,7 +755,6 @@ export const NoteEditor: React.FC = () => {
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  // Enhanced image rendering
                   img: ({node, ...props}) => (
                     <div className="my-4 flex justify-center">
                       <img 
@@ -620,7 +765,6 @@ export const NoteEditor: React.FC = () => {
                       />
                     </div>
                   ),
-                  // Enhanced table rendering
                   table: ({node, ...props}) => (
                     <div className="my-6 overflow-x-auto">
                       <table 
@@ -644,7 +788,6 @@ export const NoteEditor: React.FC = () => {
                       className="py-2 px-4 text-sm border-b border-r last:border-r-0" 
                     />
                   ),
-                  // Enhanced list rendering
                   ul: ({node, ...props}) => (
                     <ul {...props} className="list-disc pl-6 my-4 space-y-2" />
                   ),
@@ -654,22 +797,27 @@ export const NoteEditor: React.FC = () => {
                   li: ({node, ...props}) => (
                     <li {...props} className="pl-1 py-1" />
                   ),
-                  // Fixed paragraph spacing
                   p: ({node, ...props}) => {
-                    // Don't wrap text in paragraphs when it's inside certain elements
-                    const parent = node?.parent as any;
-                    const parentTagName = parent?.tagName?.toLowerCase?.();
+                    let parentTagName = '';
                     
-                    // Skip adding paragraph for certain container elements
+                    try {
+                      const parentInfo = (node as any)?.__parent || (node as any)?.parent;
+                      if (parentInfo && typeof parentInfo.tagName === 'string') {
+                        parentTagName = parentInfo.tagName.toLowerCase();
+                      }
+                    } catch (e) {
+                    }
+                    
                     if (["li", "th", "td"].includes(parentTagName)) {
                       return <>{props.children}</>;
                     }
                     
                     return <p {...props} className="my-2 whitespace-pre-line" />;
                   },
-                  // Enhanced code display
-                  code: ({node, inline, className, children, ...props}) => {
-                    if (inline) {
+                  code: ({node, className, children, ...props}) => {
+                    const isInline = (props as any).inline === true;
+                    
+                    if (isInline) {
                       return <code className="px-1 py-0.5 rounded bg-muted text-sm" {...props}>{children}</code>;
                     }
                     return (
@@ -687,7 +835,6 @@ export const NoteEditor: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Image Dialog */}
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -726,7 +873,6 @@ export const NoteEditor: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Table Dialog */}
       <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
         <DialogContent>
           <DialogHeader>
