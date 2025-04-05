@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +34,8 @@ import {
   Trash2,
   Undo,
   Redo,
-  Table
+  Table,
+  FilePlus
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const NoteEditor: React.FC = () => {
-  const { activeNote, updateNote, deleteNote } = useNotes();
+  const { activeNote, updateNote, deleteNote, createNote } = useNotes();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [activeTab, setActiveTab] = useState<string>("edit");
@@ -261,6 +261,17 @@ export const NoteEditor: React.FC = () => {
     }
   };
 
+  const handleCreateNewNote = () => {
+    // Create a new note in the same folder as the current note
+    const folderId = activeNote ? activeNote.folderId : null;
+    createNote(folderId);
+    
+    toast({
+      title: "New Note Created",
+      description: folderId ? "Created in the current folder" : "Created in root"
+    });
+  };
+
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
@@ -279,7 +290,7 @@ export const NoteEditor: React.FC = () => {
       
       const cells = table.querySelectorAll('th, td');
       cells.forEach((cell) => {
-        (cell as HTMLElement).setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
+        cell.setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
       });
       
       const headerCells = table.querySelectorAll('th');
@@ -290,7 +301,7 @@ export const NoteEditor: React.FC = () => {
     
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
-      (list as HTMLElement).setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
+      list.setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
     });
 
     const options = {
@@ -332,6 +343,19 @@ export const NoteEditor: React.FC = () => {
           placeholder="Note title..."
         />
         <div className="flex gap-2 ml-auto">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleCreateNewNote}
+              >
+                <FilePlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Create New Note</TooltipContent>
+          </Tooltip>
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
@@ -379,7 +403,7 @@ export const NoteEditor: React.FC = () => {
         className="flex-1 flex flex-col h-full overflow-hidden"
       >
         <div className="px-4 border-b shrink-0">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center">
             <TabsList className="h-10 mx-0">
               <TabsTrigger value="edit" className="flex items-center gap-1.5">
                 <Edit className="h-4 w-4" />
@@ -392,7 +416,7 @@ export const NoteEditor: React.FC = () => {
             </TabsList>
             
             {activeTab === "edit" && (
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1 my-1">
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -609,7 +633,6 @@ export const NoteEditor: React.FC = () => {
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  // Enhanced image rendering
                   img: ({node, ...props}) => (
                     <div className="my-4 flex justify-center">
                       <img 
@@ -620,7 +643,6 @@ export const NoteEditor: React.FC = () => {
                       />
                     </div>
                   ),
-                  // Enhanced table rendering
                   table: ({node, ...props}) => (
                     <div className="my-6 overflow-x-auto">
                       <table 
@@ -644,7 +666,6 @@ export const NoteEditor: React.FC = () => {
                       className="py-2 px-4 text-sm border-b border-r last:border-r-0" 
                     />
                   ),
-                  // Enhanced list rendering
                   ul: ({node, ...props}) => (
                     <ul {...props} className="list-disc pl-6 my-4 space-y-2" />
                   ),
@@ -654,7 +675,6 @@ export const NoteEditor: React.FC = () => {
                   li: ({node, ...props}) => (
                     <li {...props} className="pl-1 py-1" />
                   ),
-                  // Fixed paragraph spacing
                   p: ({node, ...props}) => {
                     // Don't wrap text in paragraphs when it's inside certain elements
                     const parent = node?.parent as any;
@@ -667,7 +687,6 @@ export const NoteEditor: React.FC = () => {
                     
                     return <p {...props} className="my-2 whitespace-pre-line" />;
                   },
-                  // Enhanced code display
                   code: ({node, inline, className, children, ...props}) => {
                     if (inline) {
                       return <code className="px-1 py-0.5 rounded bg-muted text-sm" {...props}>{children}</code>;
