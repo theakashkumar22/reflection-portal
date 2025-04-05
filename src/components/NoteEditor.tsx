@@ -276,129 +276,50 @@ export const NoteEditor: React.FC = () => {
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
-    // Create a temporary container to style for PDF export
-    const tempContainer = document.createElement('div');
-    tempContainer.className = 'pdf-export-container';
-    tempContainer.style.padding = '20px';
-    tempContainer.style.maxWidth = '700px';
-    tempContainer.style.margin = '0 auto';
-    
     // Clone the preview content for PDF export
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
-    
-    // Remove any large margins and paddings that might cause extra pages
-    clonedPreview.style.margin = '0';
-    clonedPreview.style.padding = '0';
-    
-    // Add title to the PDF
-    const titleElement = document.createElement('h1');
-    titleElement.textContent = title || 'Untitled Note';
-    titleElement.style.marginBottom = '20px';
-    titleElement.style.fontSize = '24px';
-    titleElement.style.fontWeight = 'bold';
-    tempContainer.appendChild(titleElement);
-    
-    // Add a separator line
-    const separator = document.createElement('hr');
-    separator.style.marginBottom = '20px';
-    tempContainer.appendChild(separator);
     
     // Enhance the styles for PDF export
     const images = clonedPreview.querySelectorAll('img');
     images.forEach((img) => {
-      const imgElement = img as HTMLImageElement;
-      imgElement.style.maxWidth = '100%';
-      imgElement.style.height = 'auto';
-      imgElement.style.margin = '10px 0';
-      // Set a reasonable max-height to prevent large images causing extra pages
-      imgElement.style.maxHeight = '300px';
-      imgElement.style.objectFit = 'contain';
+      (img as HTMLElement).setAttribute('style', 'max-width: 100%; height: auto; margin: 1rem 0;');
     });
     
     const tables = clonedPreview.querySelectorAll('table');
     tables.forEach((table) => {
-      const tableElement = table as HTMLTableElement;
-      tableElement.style.width = '100%';
-      tableElement.style.borderCollapse = 'collapse';
-      tableElement.style.margin = '10px 0';
-      tableElement.style.fontSize = '11px'; // Reduced from 12px
+      (table as HTMLElement).setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 1rem 0;');
       
       const cells = table.querySelectorAll('th, td');
       cells.forEach((cell) => {
-        const cellElement = cell as HTMLTableCellElement;
-        cellElement.style.border = '1px solid #ddd';
-        cellElement.style.padding = '4px'; // Reduced from 6px
-        cellElement.style.textAlign = 'left';
+        (cell as HTMLElement).setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
       });
       
       const headerCells = table.querySelectorAll('th');
       headerCells.forEach((cell) => {
-        const headerCell = cell as HTMLTableCellElement;
-        headerCell.style.backgroundColor = '#f2f2f2';
-        headerCell.style.border = '1px solid #ddd';
-        headerCell.style.padding = '4px'; // Reduced from 6px
-        headerCell.style.textAlign = 'left';
-        headerCell.style.fontWeight = 'bold';
+        (cell as HTMLElement).setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;');
       });
     });
     
-    // Improve list styling for PDF export
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
-      const listElement = list as HTMLUListElement | HTMLOListElement;
-      listElement.style.paddingLeft = '20px'; // Ensure there's space for bullets/numbers
-      listElement.style.margin = '8px 0';
-      
-      if (listElement.tagName === 'UL') {
-        // For bullet lists
-        const listItems = listElement.querySelectorAll('li');
-        listItems.forEach((item) => {
-          const liElement = item as HTMLLIElement;
-          liElement.style.position = 'relative';
-          liElement.style.paddingLeft = '5px';
-          liElement.style.marginBottom = '6px';
-          liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
-          liElement.style.listStylePosition = 'outside'; // Position bullets outside
-        });
-      } else if (listElement.tagName === 'OL') {
-        // For numbered lists
-        const listItems = listElement.querySelectorAll('li');
-        listItems.forEach((item) => {
-          const liElement = item as HTMLLIElement;
-          liElement.style.position = 'relative';
-          liElement.style.paddingLeft = '5px';
-          liElement.style.marginBottom = '6px';
-          liElement.style.listStyleType = 'decimal'; // Ensure number style is set
-          liElement.style.listStylePosition = 'outside'; // Position numbers outside
-        });
-      }
+      (list as HTMLElement).setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
     });
-    
-    const codeBlocks = clonedPreview.querySelectorAll('pre');
-    codeBlocks.forEach((block) => {
-      const preElement = block as HTMLPreElement;
-      preElement.style.padding = '6px'; // Reduced from 8px
-      preElement.style.margin = '8px 0'; // Reduced from 10px
-      preElement.style.backgroundColor = '#f5f5f5';
-      preElement.style.fontSize = '10px'; // Reduced from 11px
-      preElement.style.whiteSpace = 'pre-wrap';
-      preElement.style.overflowX = 'hidden';
+
+    const options = {
+        margin: 10,
+        filename: `${title || 'note'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(clonedPreview).set(options).save();
+
+    toast({
+        title: "PDF Exported",
+        description: `"${title}" has been exported as PDF.`
     });
-    
-    const paragraphs = clonedPreview.querySelectorAll('p');
-    paragraphs.forEach((p) => {
-      const pElement = p as HTMLParagraphElement;
-      pElement.style.margin = '6px 0'; // Reduced from 8px
-      pElement.style.lineHeight = '1.4'; // Slightly reduced from 1.5
-    });
-    
-    const headings = clonedPreview.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    headings.forEach((heading) => {
-      const headingElement = heading as HTMLHeadingElement;
-      headingElement.style.marginTop = '12px'; // Reduced from 16px
-      headingElement.style.marginBottom = '6px'; // Reduced from 8px
-      headingElement.style.lineHeight = '1.2';
-    });
+    };
     
     // Add the cloned and styled content to our temp container
     tempContainer.appendChild(clonedPreview);
