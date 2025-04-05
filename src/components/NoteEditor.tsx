@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -306,59 +305,73 @@ export const NoteEditor: React.FC = () => {
     // Enhance the styles for PDF export
     const images = clonedPreview.querySelectorAll('img');
     images.forEach((img) => {
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
-      img.style.margin = '10px 0';
+      const imgElement = img as HTMLImageElement;
+      imgElement.style.maxWidth = '100%';
+      imgElement.style.height = 'auto';
+      imgElement.style.margin = '10px 0';
       // Set a reasonable max-height to prevent large images causing extra pages
-      img.style.maxHeight = '500px';
-      img.style.objectFit = 'contain';
+      imgElement.style.maxHeight = '300px';
+      imgElement.style.objectFit = 'contain';
     });
     
     const tables = clonedPreview.querySelectorAll('table');
     tables.forEach((table) => {
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.margin = '10px 0';
-      table.style.fontSize = '12px'; // Smaller font for tables
+      const tableElement = table as HTMLTableElement;
+      tableElement.style.width = '100%';
+      tableElement.style.borderCollapse = 'collapse';
+      tableElement.style.margin = '10px 0';
+      tableElement.style.fontSize = '11px'; // Reduced from 12px
       
       const cells = table.querySelectorAll('th, td');
       cells.forEach((cell) => {
-        cell.setAttribute('style', 'border: 1px solid #ddd; padding: 6px; text-align: left;');
+        const cellElement = cell as HTMLTableCellElement;
+        cellElement.style.border = '1px solid #ddd';
+        cellElement.style.padding = '4px'; // Reduced from 6px
+        cellElement.style.textAlign = 'left';
       });
       
       const headerCells = table.querySelectorAll('th');
       headerCells.forEach((cell) => {
-        cell.setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: bold;');
+        const headerCell = cell as HTMLTableCellElement;
+        headerCell.style.backgroundColor = '#f2f2f2';
+        headerCell.style.border = '1px solid #ddd';
+        headerCell.style.padding = '4px'; // Reduced from 6px
+        headerCell.style.textAlign = 'left';
+        headerCell.style.fontWeight = 'bold';
       });
     });
     
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
-      list.style.paddingLeft = '20px';
-      list.style.margin = '10px 0';
+      const listElement = list as HTMLUListElement | HTMLOListElement;
+      listElement.style.paddingLeft = '16px'; // Reduced from 20px
+      listElement.style.margin = '8px 0'; // Reduced from 10px
     });
     
     const codeBlocks = clonedPreview.querySelectorAll('pre');
     codeBlocks.forEach((block) => {
-      block.style.padding = '8px';
-      block.style.margin = '10px 0';
-      block.style.backgroundColor = '#f5f5f5';
-      block.style.fontSize = '11px'; // Smaller font for code blocks
-      block.style.whiteSpace = 'pre-wrap'; // Prevents horizontal scrolling
-      block.style.overflowX = 'hidden'; // Hide horizontal overflow
+      const preElement = block as HTMLPreElement;
+      preElement.style.padding = '6px'; // Reduced from 8px
+      preElement.style.margin = '8px 0'; // Reduced from 10px
+      preElement.style.backgroundColor = '#f5f5f5';
+      preElement.style.fontSize = '10px'; // Reduced from 11px
+      preElement.style.whiteSpace = 'pre-wrap';
+      preElement.style.overflowX = 'hidden';
     });
     
     const paragraphs = clonedPreview.querySelectorAll('p');
     paragraphs.forEach((p) => {
-      p.style.margin = '8px 0';
-      p.style.lineHeight = '1.5';
+      const pElement = p as HTMLParagraphElement;
+      pElement.style.margin = '6px 0'; // Reduced from 8px
+      pElement.style.lineHeight = '1.4'; // Slightly reduced from 1.5
     });
     
     const headings = clonedPreview.querySelectorAll('h1, h2, h3, h4, h5, h6');
     headings.forEach((heading) => {
-      heading.style.marginTop = '16px';
-      heading.style.marginBottom = '8px';
-      heading.style.lineHeight = '1.2';
+      const headingElement = heading as HTMLHeadingElement;
+      headingElement.style.marginTop = '12px'; // Reduced from 16px
+      headingElement.style.marginBottom = '6px'; // Reduced from 8px
+      headingElement.style.lineHeight = '1.2';
     });
     
     // Add the cloned and styled content to our temp container
@@ -369,9 +382,9 @@ export const NoteEditor: React.FC = () => {
     
     // Configure the PDF options
     const options = {
-      margin: [15, 15, 15, 15], // [top, right, bottom, left] margins in mm
+      margin: [10, 10, 10, 10], // Reduced from [15, 15, 15, 15] to save space
       filename: `${title || 'note'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 0.95 }, // Slightly reduced quality
       html2canvas: { 
         scale: 2,
         useCORS: true,
