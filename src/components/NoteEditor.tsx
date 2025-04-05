@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -677,11 +676,16 @@ export const NoteEditor: React.FC = () => {
                     <li {...props} className="pl-1 py-1" />
                   ),
                   p: ({node, ...props}) => {
-                    // Don't wrap text in paragraphs when it's inside certain elements
-                    const parentNode = node?.parentNode as any;
-                    const parentTagName = parentNode?.tagName?.toLowerCase?.();
+                    let parentTagName = '';
                     
-                    // Skip adding paragraph for certain container elements
+                    try {
+                      const parentInfo = (node as any)?.__parent || (node as any)?.parent;
+                      if (parentInfo && typeof parentInfo.tagName === 'string') {
+                        parentTagName = parentInfo.tagName.toLowerCase();
+                      }
+                    } catch (e) {
+                    }
+                    
                     if (["li", "th", "td"].includes(parentTagName)) {
                       return <>{props.children}</>;
                     }
@@ -689,7 +693,6 @@ export const NoteEditor: React.FC = () => {
                     return <p {...props} className="my-2 whitespace-pre-line" />;
                   },
                   code: ({node, className, children, ...props}) => {
-                    // Check if this code block is inline from custom props
                     const isInline = (props as any).inline === true;
                     
                     if (isInline) {
@@ -710,7 +713,6 @@ export const NoteEditor: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Image Dialog */}
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -749,7 +751,6 @@ export const NoteEditor: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Table Dialog */}
       <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
         <DialogContent>
           <DialogHeader>
