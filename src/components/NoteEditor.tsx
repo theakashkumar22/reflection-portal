@@ -342,43 +342,37 @@ export const NoteEditor: React.FC = () => {
       });
     });
     
-    // Improve list styling for PDF export with proper alignment
-const lists = clonedPreview.querySelectorAll('ul, ol');
-lists.forEach((list) => {
-  const listElement = list as HTMLUListElement | HTMLOListElement;
-  listElement.style.paddingLeft = '20px'; // Overall list indentation
-  listElement.style.margin = '8px 0';
-  
-  // Common styles for both UL and OL
-  const listItems = listElement.querySelectorAll('li');
-  listItems.forEach((item) => {
-    const liElement = item as HTMLLIElement;
-    liElement.style.display = 'block';
-    liElement.style.position = 'relative';
-    liElement.style.paddingLeft = '20px'; // Space for bullet/number
-    liElement.style.marginBottom = '6px';
-    liElement.style.textIndent = '0'; // Ensure text starts at same position
-    liElement.style.listStylePosition = 'outside'; // Position markers outside
-    liElement.style.marginLeft = '0'; // Remove default margin
-  });
-
-  // Specific styles for bullet lists
-  if (listElement.tagName === 'UL') {
-    listElement.style.listStyleType = 'disc'; // Set bullet style
-    listItems.forEach((item) => {
-      const liElement = item as HTMLLIElement;
-      liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
+    // Improve list styling for PDF export
+    const lists = clonedPreview.querySelectorAll('ul, ol');
+    lists.forEach((list) => {
+      const listElement = list as HTMLUListElement | HTMLOListElement;
+      listElement.style.paddingLeft = '20px'; // Ensure there's space for bullets/numbers
+      listElement.style.margin = '8px 0';
+      
+      if (listElement.tagName === 'UL') {
+        // For bullet lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '4px';
+          liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
+          liElement.style.listStylePosition = 'outside'; // Position bullets outside
+        });
+      } else if (listElement.tagName === 'OL') {
+        // For numbered lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '6px';
+          liElement.style.listStyleType = 'decimal'; // Ensure number style is set
+          liElement.style.listStylePosition = 'outside'; // Position numbers outside
+        });
+      }
     });
-  } 
-  // Specific styles for numbered lists
-  else if (listElement.tagName === 'OL') {
-    listElement.style.listStyleType = 'decimal'; // Set number style
-    listItems.forEach((item) => {
-      const liElement = item as HTMLLIElement;
-      liElement.style.listStyleType = 'decimal'; // Ensure number style is set
-    });
-  }
-});
     
     const codeBlocks = clonedPreview.querySelectorAll('pre');
     codeBlocks.forEach((block) => {
