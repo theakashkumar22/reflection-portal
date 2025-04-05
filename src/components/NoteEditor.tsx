@@ -356,7 +356,7 @@ export const NoteEditor: React.FC = () => {
           const liElement = item as HTMLLIElement;
           liElement.style.position = 'relative';
           liElement.style.paddingLeft = '5px';
-          liElement.style.marginBottom = '4px';
+          liElement.style.marginBottom = '6px';
           liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
           liElement.style.listStylePosition = 'outside'; // Position bullets outside
         });
