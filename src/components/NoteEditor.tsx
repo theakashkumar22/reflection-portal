@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -341,11 +342,36 @@ export const NoteEditor: React.FC = () => {
       });
     });
     
+    // Improve list styling for PDF export
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
       const listElement = list as HTMLUListElement | HTMLOListElement;
-      listElement.style.paddingLeft = '16px'; // Reduced from 20px
-      listElement.style.margin = '8px 0'; // Reduced from 10px
+      listElement.style.paddingLeft = '20px'; // Ensure there's space for bullets/numbers
+      listElement.style.margin = '8px 0';
+      
+      if (listElement.tagName === 'UL') {
+        // For bullet lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '6px';
+          liElement.style.listStyleType = 'disc'; // Ensure bullet style is set
+          liElement.style.listStylePosition = 'outside'; // Position bullets outside
+        });
+      } else if (listElement.tagName === 'OL') {
+        // For numbered lists
+        const listItems = listElement.querySelectorAll('li');
+        listItems.forEach((item) => {
+          const liElement = item as HTMLLIElement;
+          liElement.style.position = 'relative';
+          liElement.style.paddingLeft = '5px';
+          liElement.style.marginBottom = '6px';
+          liElement.style.listStyleType = 'decimal'; // Ensure number style is set
+          liElement.style.listStylePosition = 'outside'; // Position numbers outside
+        });
+      }
     });
     
     const codeBlocks = clonedPreview.querySelectorAll('pre');
