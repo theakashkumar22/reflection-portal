@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -294,16 +293,3 @@
 .note-editor pre code {
   @apply bg-transparent p-0;
 }
-
-/* Mobile responsive styles for editor toolbar */
-@media (max-width: 640px) {
-  .note-editor {
-    @apply px-2;
-  }
-  
-  /* Make toolbar wrap properly on small screens */
-  .toolbar-wrap {
-    @apply flex-wrap gap-1 justify-center;
-  }
-}
-
