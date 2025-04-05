@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -275,49 +276,131 @@ export const NoteEditor: React.FC = () => {
   const exportToPdf = () => {
     if (!activeNote || !previewRef.current) return;
 
+    // Create a temporary container to style for PDF export
+    const tempContainer = document.createElement('div');
+    tempContainer.className = 'pdf-export-container';
+    tempContainer.style.padding = '20px';
+    tempContainer.style.maxWidth = '700px';
+    tempContainer.style.margin = '0 auto';
+    
     // Clone the preview content for PDF export
     const clonedPreview = previewRef.current.cloneNode(true) as HTMLElement;
+    
+    // Remove any large margins and paddings that might cause extra pages
+    clonedPreview.style.margin = '0';
+    clonedPreview.style.padding = '0';
+    
+    // Add title to the PDF
+    const titleElement = document.createElement('h1');
+    titleElement.textContent = title || 'Untitled Note';
+    titleElement.style.marginBottom = '20px';
+    titleElement.style.fontSize = '24px';
+    titleElement.style.fontWeight = 'bold';
+    tempContainer.appendChild(titleElement);
+    
+    // Add a separator line
+    const separator = document.createElement('hr');
+    separator.style.marginBottom = '20px';
+    tempContainer.appendChild(separator);
     
     // Enhance the styles for PDF export
     const images = clonedPreview.querySelectorAll('img');
     images.forEach((img) => {
-      (img as HTMLElement).setAttribute('style', 'max-width: 100%; height: auto; margin: 1rem 0;');
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.margin = '10px 0';
+      // Set a reasonable max-height to prevent large images causing extra pages
+      img.style.maxHeight = '500px';
+      img.style.objectFit = 'contain';
     });
     
     const tables = clonedPreview.querySelectorAll('table');
     tables.forEach((table) => {
-      (table as HTMLElement).setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 1rem 0;');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.margin = '10px 0';
+      table.style.fontSize = '12px'; // Smaller font for tables
       
       const cells = table.querySelectorAll('th, td');
       cells.forEach((cell) => {
-        cell.setAttribute('style', 'border: 1px solid #ddd; padding: 8px; text-align: left;');
+        cell.setAttribute('style', 'border: 1px solid #ddd; padding: 6px; text-align: left;');
       });
       
       const headerCells = table.querySelectorAll('th');
       headerCells.forEach((cell) => {
-        (cell as HTMLElement).setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;');
+        cell.setAttribute('style', 'background-color: #f2f2f2; border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: bold;');
       });
     });
     
     const lists = clonedPreview.querySelectorAll('ul, ol');
     lists.forEach((list) => {
-      list.setAttribute('style', 'padding-left: 2rem; margin: 1rem 0;');
+      list.style.paddingLeft = '20px';
+      list.style.margin = '10px 0';
     });
-
+    
+    const codeBlocks = clonedPreview.querySelectorAll('pre');
+    codeBlocks.forEach((block) => {
+      block.style.padding = '8px';
+      block.style.margin = '10px 0';
+      block.style.backgroundColor = '#f5f5f5';
+      block.style.fontSize = '11px'; // Smaller font for code blocks
+      block.style.whiteSpace = 'pre-wrap'; // Prevents horizontal scrolling
+      block.style.overflowX = 'hidden'; // Hide horizontal overflow
+    });
+    
+    const paragraphs = clonedPreview.querySelectorAll('p');
+    paragraphs.forEach((p) => {
+      p.style.margin = '8px 0';
+      p.style.lineHeight = '1.5';
+    });
+    
+    const headings = clonedPreview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach((heading) => {
+      heading.style.marginTop = '16px';
+      heading.style.marginBottom = '8px';
+      heading.style.lineHeight = '1.2';
+    });
+    
+    // Add the cloned and styled content to our temp container
+    tempContainer.appendChild(clonedPreview);
+    
+    // Add the temp container to the document temporarily
+    document.body.appendChild(tempContainer);
+    
+    // Configure the PDF options
     const options = {
-        margin: 10,
-        filename: `${title || 'note'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: [15, 15, 15, 15], // [top, right, bottom, left] margins in mm
+      filename: `${title || 'note'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait',
+        compress: true
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().from(clonedPreview).set(options).save();
-
-    toast({
-        title: "PDF Exported",
-        description: `"${title}" has been exported as PDF.`
-    });
+    // Generate the PDF
+    html2pdf()
+      .from(tempContainer)
+      .set(options)
+      .save()
+      .then(() => {
+        // Remove the temp container after PDF is generated
+        document.body.removeChild(tempContainer);
+        
+        toast({
+          title: "PDF Exported",
+          description: `"${title}" has been exported as PDF.`
+        });
+      });
   };
 
   if (!activeNote) {
