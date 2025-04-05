@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNotes } from "@/context/NotesContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -677,8 +678,8 @@ export const NoteEditor: React.FC = () => {
                   ),
                   p: ({node, ...props}) => {
                     // Don't wrap text in paragraphs when it's inside certain elements
-                    const parent = node?.parent as any;
-                    const parentTagName = parent?.tagName?.toLowerCase?.();
+                    const parentNode = node?.parentNode as any;
+                    const parentTagName = parentNode?.tagName?.toLowerCase?.();
                     
                     // Skip adding paragraph for certain container elements
                     if (["li", "th", "td"].includes(parentTagName)) {
@@ -687,8 +688,11 @@ export const NoteEditor: React.FC = () => {
                     
                     return <p {...props} className="my-2 whitespace-pre-line" />;
                   },
-                  code: ({node, inline, className, children, ...props}) => {
-                    if (inline) {
+                  code: ({node, className, children, ...props}) => {
+                    // Check if this code block is inline from custom props
+                    const isInline = (props as any).inline === true;
+                    
+                    if (isInline) {
                       return <code className="px-1 py-0.5 rounded bg-muted text-sm" {...props}>{children}</code>;
                     }
                     return (
