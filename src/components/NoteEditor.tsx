@@ -319,7 +319,6 @@ export const NoteEditor: React.FC = () => {
         title: "PDF Exported",
         description: `"${title}" has been exported as PDF.`
     });
-      });
   };
 
   if (!activeNote) {
